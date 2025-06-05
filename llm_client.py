@@ -461,3 +461,28 @@ class OllamaClient:
         result = self._strip_think_tag(result)
 
         return result
+
+    def trim_message_history(self, max_messages=10, keep_system_prompt=True):
+        """
+        Trim the message history to prevent it from growing too large.
+
+        :param max_messages: Maximum number of messages to keep (excluding system prompt)
+        :param keep_system_prompt: Whether to always keep the system prompt
+        """
+        if len(self.message_history) <= max_messages:
+            return  # No need to trim
+
+        # If we need to keep the system prompt and it exists
+        if (
+            keep_system_prompt
+            and self.message_history
+            and self.message_history[0].get("role") == "system"
+        ):
+            # Remove everything except system prompt and the most recent messages
+            system_prompt = self.message_history[0]
+            # Keep the most recent messages (starting from the end)
+            recent_messages = self.message_history[-(max_messages - 1) :]
+            self.message_history = [system_prompt] + recent_messages
+        else:
+            # Just keep the most recent messages
+            self.message_history = self.message_history[-max_messages:]

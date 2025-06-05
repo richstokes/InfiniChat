@@ -53,6 +53,7 @@ def simulate_conversation(
     max_tokens,
     initial_prompt="",
     debug_mode=False,
+    history_limit=15,  # Maximum messages to keep in history per client
 ):
     """
     Simulate a conversation between two LLM clients with rich formatting.
@@ -62,6 +63,7 @@ def simulate_conversation(
     :param initial_prompt: Optional initial prompt to start the conversation
     :param max_turns: Maximum number of conversation turns
     :param max_tokens: Maximum tokens per response
+    :param history_limit: Maximum number of messages to keep in history for each client
     :return: The complete conversation history as a string
     """
     conversation_history = []
@@ -168,6 +170,11 @@ def simulate_conversation(
                     debug_mode=debug_mode,
                 )
 
+                # Trim history to prevent it from growing too large
+                client_a.trim_message_history(
+                    max_messages=history_limit, keep_system_prompt=True
+                )
+
             # Add the response to conversation history
             conversation_history.append(f"{client_a.model_name}: {response_a}")
 
@@ -222,6 +229,10 @@ def simulate_conversation(
                     debug_mode=debug_mode,
                 )
 
+                # Trim history to prevent it from growing too large
+                client_b.trim_message_history(
+                    max_messages=history_limit, keep_system_prompt=True
+                )
             # Add the response to conversation history
             conversation_history.append(f"{client_b.model_name}: {response_b}")
 
@@ -295,6 +306,12 @@ if __name__ == "__main__":
         action="store_true",
         help="Enable debug mode for additional output",
     )
+    parser.add_argument(
+        "--history_limit",
+        type=int,
+        default=15,
+        help="Maximum number of messages to keep in conversation history for each model",
+    )
     args = parser.parse_args()
 
     # Print welcome message
@@ -316,6 +333,7 @@ if __name__ == "__main__":
             max_tokens=args.max_tokens + 50,
             initial_prompt=INITIAL_PROMPT,
             debug_mode=args.debug,
+            history_limit=args.history_limit,
         )
 
         # Save the conversation history to a file
