@@ -10,9 +10,14 @@ console = Console()
 
 class OllamaClient:
     def __init__(
-        self, model_name: str, system_prompt: str = None, debug_mode: bool = False
+        self,
+        model_name: str,
+        system_prompt: str = None,
+        debug_mode: bool = False,
+        show_json: bool = False,
     ):
         self.debug_mode = debug_mode
+        self.show_json = show_json
         self.model_name = model_name
         self.system_prompt = system_prompt
         self.base_url = "http://localhost:11434/api"
@@ -196,7 +201,7 @@ class OllamaClient:
         if self.system_prompt:
             payload["system"] = self.system_prompt
 
-        if self.debug_mode:
+        if self.show_json:
             print(
                 f"\n****\nPayload for streaming: {json.dumps(payload, indent=2)} \n****"
             )  # For debugging
@@ -378,7 +383,7 @@ class OllamaClient:
             "stream": False,
         }
 
-        if self.debug_mode:
+        if self.show_json:
             print(f"\n****\nPayload for chat: {json.dumps(payload, indent=2)} \n****")
 
         response = requests.post(
@@ -417,7 +422,7 @@ class OllamaClient:
             "stream": True,
         }
 
-        if self.debug_mode:
+        if self.show_json:
             print(
                 f"\n****\nPayload for streaming chat: {json.dumps(payload, indent=2)} \n****"
             )

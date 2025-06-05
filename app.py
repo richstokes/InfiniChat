@@ -287,6 +287,11 @@ if __name__ == "__main__":
         help="Enable debug mode for additional output",
     )
     parser.add_argument(
+        "--show_json",
+        action="store_true",
+        help="Show raw JSON responses from the models",
+    )
+    parser.add_argument(
         "--history_limit",
         type=int,
         default=15,
@@ -316,6 +321,7 @@ if __name__ == "__main__":
     client_A = OllamaClient(
         model_name=args.model_a,
         debug_mode=args.debug,
+        show_json=args.show_json,
         system_prompt=(
             "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
             "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
@@ -334,6 +340,7 @@ if __name__ == "__main__":
     client_B = OllamaClient(
         model_name=args.model_b,
         debug_mode=args.debug,
+        show_json=args.show_json,
         system_prompt=(
             "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
             "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
