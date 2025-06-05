@@ -362,8 +362,7 @@ if __name__ == "__main__":
         conversation_history = simulate_conversation(
             client_A,
             client_B,
-            max_turns=args.max_turns
-            - 1,  # One less than the maximum to ensure we don't exceed the limit
+            max_turns=args.max_turns,
             max_tokens=args.max_tokens + 50,
             initial_prompt=INITIAL_PROMPT,
             debug_mode=args.debug,
