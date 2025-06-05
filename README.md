@@ -8,7 +8,7 @@ InfiniChat is an application that simulates conversations between two LLMs using
 ## Features
 
 - **Full Conversation History**: Models maintain a record of the entire conversation, enabling more coherent interactions
-- **Smart Context Management**: When conversation history grows too large, earlier messages are summarized to maintain context
+- **Smart Context Management**: When conversation history grows too large, earlier messages are intelligently summarized by the LLM itself to maintain context
 - **Streaming Responses**: Real-time streaming of model outputs with live display
 - **Attractive Terminal UI**: Rich text formatting with color-coded speakers and panels
 - **Conversation Saving**: Automatically saves transcripts of conversations
@@ -60,3 +60,18 @@ pipenv run python app.py --debug
 ```
 
 After running, a conversation transcript will be saved to `conversation_history.txt`.
+
+## Conversation History Management
+
+InfiniChat employs sophisticated conversation history management to ensure that the LLMs maintain coherent context throughout the conversation:
+
+1. **Full History Tracking**: Both models maintain a complete record of all message exchanges.
+
+2. **LLM-Powered Summarization**: When the history grows too large:
+   - The LLM itself generates an intelligent summary of older messages
+   - This summary preserves key context and important information
+   - The summary replaces older messages to maintain the context window size
+
+3. **Fallback Mechanism**: If LLM summarization fails for any reason, a simple bullet-point summary is created instead.
+
+This approach allows the conversation to continue indefinitely while maintaining coherent context, even as older messages are trimmed from the history.

@@ -27,7 +27,7 @@ client_A = OllamaClient(
         "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
         "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
         "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
-        "You will be having a fun, lively discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 5 sentences per message. "
+        "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
     ),
     # system_prompt=(
     #     "You're an advanced AI designed to debate the best ice cream flavor. "
@@ -47,7 +47,7 @@ client_B = OllamaClient(
         "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
         "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
         "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
-        "You will be having a fun, lively discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 5 sentences per message. "
+        "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 2-3 sentences per message. "
     ),
     # system_prompt=(
     #     "You're an advanced AI designed to debate the best ice cream flavor. "
