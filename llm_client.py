@@ -465,6 +465,7 @@ class OllamaClient:
     def trim_message_history(self, max_messages=10, keep_system_prompt=True):
         """
         Trim the message history to prevent it from growing too large.
+        Adds a summary of the trimmed messages to maintain conversation context.
 
         :param max_messages: Maximum number of messages to keep (excluding system prompt)
         :param keep_system_prompt: Whether to always keep the system prompt
@@ -472,17 +473,81 @@ class OllamaClient:
         if len(self.message_history) <= max_messages:
             return  # No need to trim
 
-        # If we need to keep the system prompt and it exists
+        # Determine which messages to trim
         if (
             keep_system_prompt
             and self.message_history
             and self.message_history[0].get("role") == "system"
         ):
-            # Remove everything except system prompt and the most recent messages
             system_prompt = self.message_history[0]
-            # Keep the most recent messages (starting from the end)
-            recent_messages = self.message_history[-(max_messages - 1) :]
-            self.message_history = [system_prompt] + recent_messages
+            # Messages to be removed (excluding system prompt)
+            messages_to_trim = self.message_history[1 : -(max_messages - 2)]
+            # Messages to keep (most recent ones)
+            recent_messages = self.message_history[-(max_messages - 2) :]
+
+            # Create a summary of the trimmed messages
+            summary = self._create_conversation_summary(messages_to_trim)
+
+            # Add the summary as a user message
+            summary_message = {
+                "role": "user",
+                "content": f"Summary of previous conversation: {summary}",
+            }
+
+            # Reconstruct the message history with: system prompt + summary + recent messages
+            self.message_history = [system_prompt, summary_message] + recent_messages
         else:
-            # Just keep the most recent messages
-            self.message_history = self.message_history[-max_messages:]
+            # Messages to be removed
+            messages_to_trim = self.message_history[: -max_messages + 1]
+            # Messages to keep
+            recent_messages = self.message_history[-max_messages + 1 :]
+
+            # Create a summary of the trimmed messages
+            summary = self._create_conversation_summary(messages_to_trim)
+
+            # Add the summary as a user message
+            summary_message = {
+                "role": "user",
+                "content": f"Summary of previous conversation: {summary}",
+            }
+
+            # Reconstruct the message history with: summary + recent messages
+            self.message_history = [summary_message] + recent_messages
+
+    def _create_conversation_summary(self, messages):
+        """
+        Create a concise summary of the provided messages.
+
+        :param messages: List of message objects to summarize
+        :return: A string containing a bullet-point summary
+        """
+        # If there are no messages to summarize
+        if not messages:
+            return "No previous messages."
+
+        # Create a simple bullet point summary
+        summary_points = []
+        for msg in messages:
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+
+            # Truncate very long messages
+            if len(content) > 100:
+                content = content[:97] + "..."
+
+            if role == "user":
+                summary_points.append(f"• User asked: {content}")
+            elif role == "assistant":
+                summary_points.append(f"• Assistant responded about: {content}")
+
+        # If we have too many points, keep only the first and last few
+        if len(summary_points) > 8:
+            first_points = summary_points[:3]
+            last_points = summary_points[-3:]
+            summary_points = (
+                first_points
+                + [f"• ... ({len(summary_points) - 6} more exchanges) ..."]
+                + last_points
+            )
+
+        return "\n".join(summary_points)
