@@ -149,7 +149,6 @@ def simulate_conversation(
                 response_a = client_a.chat_stream_with_callback(
                     max_tokens,
                     callback=display_chunk,
-                    debug_mode=debug_mode,
                 )
 
                 # Trim history to prevent it from growing too large
@@ -208,7 +207,6 @@ def simulate_conversation(
                 response_b = client_b.chat_stream_with_callback(
                     max_tokens,
                     callback=display_chunk,
-                    debug_mode=debug_mode,
                 )
 
                 # Trim history to prevent it from growing too large
@@ -317,6 +315,7 @@ if __name__ == "__main__":
     # Initialize clients with parsed arguments
     client_A = OllamaClient(
         model_name=args.model_a,
+        debug_mode=args.debug,
         system_prompt=(
             "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
             "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
@@ -334,6 +333,7 @@ if __name__ == "__main__":
 
     client_B = OllamaClient(
         model_name=args.model_b,
+        debug_mode=args.debug,
         system_prompt=(
             "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
             "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "

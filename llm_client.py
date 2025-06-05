@@ -9,7 +9,10 @@ console = Console()
 
 
 class OllamaClient:
-    def __init__(self, model_name: str, system_prompt: str = None):
+    def __init__(
+        self, model_name: str, system_prompt: str = None, debug_mode: bool = False
+    ):
+        self.debug_mode = debug_mode
         self.model_name = model_name
         self.system_prompt = system_prompt
         self.base_url = "http://localhost:11434/api"
@@ -171,7 +174,7 @@ class OllamaClient:
         print(f"Generated text: {generated_text}")
         return generated_text
 
-    def generate_stream(self, prompt: str, max_tokens: int = 100, debug_mode=False):
+    def generate_stream(self, prompt: str, max_tokens: int = 100):
         """
         Generate streaming text using the specified model and prompt.
 
@@ -193,7 +196,7 @@ class OllamaClient:
         if self.system_prompt:
             payload["system"] = self.system_prompt
 
-        if debug_mode:
+        if self.debug_mode:
             print(
                 f"\n****\nPayload for streaming: {json.dumps(payload, indent=2)} \n****"
             )  # For debugging
@@ -235,7 +238,7 @@ class OllamaClient:
         return result
 
     def generate_stream_with_callback(
-        self, prompt: str, max_tokens: int = 100, callback=None, debug_mode=False
+        self, prompt: str, max_tokens: int = 100, callback=None
     ):
         """
         Generate streaming text and apply a callback function to each chunk.
@@ -247,7 +250,7 @@ class OllamaClient:
         :return: The complete generated text as a string.
         """
         result = ""
-        for chunk in self.generate_stream(prompt, max_tokens, debug_mode=debug_mode):
+        for chunk in self.generate_stream(prompt, max_tokens):
             # Apply the callback to each chunk if provided
             if callback:
                 callback(chunk)
@@ -355,12 +358,11 @@ class OllamaClient:
         self.message_history.append({"role": role, "content": content})
         # print(f"✅ Added message to history: {role} - {content}")
 
-    def chat(self, max_tokens: int = 100, debug_mode=False) -> str:
+    def chat(self, max_tokens: int = 100) -> str:
         """
         Generate a chat response using the specified model and the current message history.
 
         :param max_tokens: The maximum number of tokens to generate.
-        :param debug_mode: Whether to print debug information.
         :return: The generated chat response.
         """
         if not self.message_history:
@@ -376,7 +378,7 @@ class OllamaClient:
             "stream": False,
         }
 
-        if debug_mode:
+        if self.debug_mode:
             print(f"\n****\nPayload for chat: {json.dumps(payload, indent=2)} \n****")
 
         response = requests.post(
@@ -390,17 +392,16 @@ class OllamaClient:
         # Add the assistant's response to the message history
         self.message_history.append({"role": "assistant", "content": chat_response})
 
-        if debug_mode:
+        if self.debug_mode:
             print(f"Chat response: {chat_response}")
 
         return chat_response
 
-    def chat_stream(self, max_tokens: int = 100, debug_mode=False):
+    def chat_stream(self, max_tokens: int = 100):
         """
         Generate a streaming chat response using the specified model and the current message history.
 
         :param max_tokens: The maximum number of tokens to generate.
-        :param debug_mode: Whether to print debug information.
         :return: A generator yielding chunks of the generated chat response.
         """
         if not self.message_history:
@@ -416,7 +417,7 @@ class OllamaClient:
             "stream": True,
         }
 
-        if debug_mode:
+        if self.debug_mode:
             print(
                 f"\n****\nPayload for streaming chat: {json.dumps(payload, indent=2)} \n****"
             )
@@ -449,20 +450,17 @@ class OllamaClient:
         # After streaming is complete, add the full response to message history
         self.message_history.append({"role": "assistant", "content": full_response})
 
-    def chat_stream_with_callback(
-        self, max_tokens: int = 100, callback=None, debug_mode=False
-    ):
+    def chat_stream_with_callback(self, max_tokens: int = 100, callback=None):
         """
         Generate a streaming chat response and apply a callback function to each chunk.
         Also returns the complete response as a single string.
 
         :param max_tokens: The maximum number of tokens to generate.
         :param callback: A function to call with each chunk (e.g., to display it).
-        :param debug_mode: Whether to print debug information.
         :return: The complete generated chat response as a string.
         """
         result = ""
-        for chunk in self.chat_stream(max_tokens, debug_mode=debug_mode):
+        for chunk in self.chat_stream(max_tokens):
             # Apply the callback to each chunk if provided
             if callback:
                 callback(chunk)
@@ -483,11 +481,14 @@ class OllamaClient:
         :param max_messages: Maximum number of messages to keep (excluding system prompt)
         :param keep_system_prompt: Whether to always keep the system prompt
         """
-        # print(f"Trimming message history to a maximum of {max_messages} messages.")
-        if len(self.message_history) <= max_messages:
-            return  # No need to trim
+        if self.debug_mode:
+            print(f"Trimming message history to a maximum of {max_messages} messages.")
+            print(f"Current message history length: {len(self.message_history)}")
 
-        # print(f"Current message history length: {len(self.message_history)}")
+        if len(self.message_history) <= max_messages:
+            if self.debug_mode:
+                print("No trimming needed - history is within limit.")
+            return  # No need to trim
 
         # Determine which messages to trim
         if (
@@ -496,13 +497,38 @@ class OllamaClient:
             and self.message_history[0].get("role") == "system"
         ):
             system_prompt = self.message_history[0]
-            # Messages to be removed (excluding system prompt)
-            messages_to_trim = self.message_history[1 : -(max_messages - 2)]
-            # Messages to keep (most recent ones)
-            recent_messages = self.message_history[-(max_messages - 2) :]
+
+            # We want to keep: system_prompt + summary + (max_messages - 2) recent messages
+            # So we need at least 3 messages total to make trimming worthwhile
+            messages_to_keep_count = max(
+                1, max_messages - 2
+            )  # At least 1 recent message
+
+            if (
+                len(self.message_history) <= messages_to_keep_count + 1
+            ):  # +1 for system prompt
+                if self.debug_mode:
+                    print("Not enough messages to justify trimming with system prompt.")
+                return
+
+            # Get the messages to trim (everything except system prompt and the most recent ones)
+            total_messages = len(self.message_history)
+            trim_end_index = total_messages - messages_to_keep_count
+
+            messages_to_trim = self.message_history[
+                1:trim_end_index
+            ]  # Skip system prompt
+            recent_messages = self.message_history[trim_end_index:]  # Keep most recent
+
+            if self.debug_mode:
+                print(
+                    f"With system prompt: trimming {len(messages_to_trim)} messages, keeping {len(recent_messages)} recent ones"
+                )
 
             # Create a summary of the trimmed messages
             summary = self._create_conversation_summary(messages_to_trim)
+            if self.debug_mode:
+                print(f"Generated summary: {summary}")
 
             # Add the summary as a user message
             summary_message = {
@@ -513,13 +539,32 @@ class OllamaClient:
             # Reconstruct the message history with: system prompt + summary + recent messages
             self.message_history = [system_prompt, summary_message] + recent_messages
         else:
-            # Messages to be removed
-            messages_to_trim = self.message_history[: -max_messages + 1]
-            # Messages to keep
-            recent_messages = self.message_history[-max_messages + 1 :]
+            # No system prompt case
+            # We want to keep: summary + (max_messages - 1) recent messages
+            messages_to_keep_count = max(
+                1, max_messages - 1
+            )  # At least 1 recent message
+
+            if len(self.message_history) <= messages_to_keep_count:
+                print("Not enough messages to justify trimming without system prompt.")
+                return
+
+            # Get the messages to trim and keep
+            total_messages = len(self.message_history)
+            trim_end_index = total_messages - messages_to_keep_count
+
+            messages_to_trim = self.message_history[:trim_end_index]
+            recent_messages = self.message_history[trim_end_index:]
+
+            if self.debug_mode:
+                print(
+                    f"Without system prompt: trimming {len(messages_to_trim)} messages, keeping {len(recent_messages)} recent ones"
+                )
 
             # Create a summary of the trimmed messages
             summary = self._create_conversation_summary(messages_to_trim)
+            if self.debug_mode:
+                print(f"Generated summary: {summary}")
 
             # Add the summary as a user message
             summary_message = {
@@ -530,6 +575,11 @@ class OllamaClient:
             # Reconstruct the message history with: summary + recent messages
             self.message_history = [summary_message] + recent_messages
 
+        if self.debug_mode:
+            print(
+                f"Message history after trimming: {len(self.message_history)} messages"
+            )
+
     def _create_conversation_summary(self, messages):
         """
         Create a concise summary of the provided messages using the LLM itself.
@@ -537,6 +587,8 @@ class OllamaClient:
         :param messages: List of message objects to summarize
         :return: A string containing a concise summary generated by the LLM
         """
+        if self.debug_mode:
+            print(f"Creating a summary of {len(messages)} messages...")
         # If there are no messages to summarize
         if not messages:
             return "No previous messages."
