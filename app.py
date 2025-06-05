@@ -91,7 +91,7 @@ def simulate_conversation(
 
     if debug_mode:
         console.print(
-            f"[bold yellow]Debug mode enabled![/bold yellow] Max turns: {max_turns}, Max tokens: {max_tokens}"
+            f"[bold yellow]Debug mode enabled![/bold yellow] Max turns: {max_turns}, Max tokens: {max_tokens}, History limit: {history_limit}"
         )
 
     # Display a title for the conversation
