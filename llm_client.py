@@ -483,11 +483,11 @@ class OllamaClient:
         :param max_messages: Maximum number of messages to keep (excluding system prompt)
         :param keep_system_prompt: Whether to always keep the system prompt
         """
-        print(f"Trimming message history to a maximum of {max_messages} messages.")
+        # print(f"Trimming message history to a maximum of {max_messages} messages.")
         if len(self.message_history) <= max_messages:
             return  # No need to trim
 
-        print(f"Current message history length: {len(self.message_history)}")
+        # print(f"Current message history length: {len(self.message_history)}")
 
         # Determine which messages to trim
         if (
