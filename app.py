@@ -62,14 +62,14 @@ def simulate_conversation(
         )
 
     # Display a title for the conversation
-    # console.print(
-    #     Panel.fit(
-    #         "🤖 [bold yellow]InfiniChat: AI Conversation[/bold yellow] 🤖",
-    #         box=ROUNDED,
-    #         border_style="yellow",
-    #         padding=(1, 2),
-    #     )
-    # )
+    console.print(
+        Panel.fit(
+            "🤖 [bold yellow]InfiniChat: AI Conversation[/bold yellow] 🤖",
+            box=ROUNDED,
+            border_style="yellow",
+            padding=(1, 2),
+        )
+    )
 
     if initial_prompt:
         # Display the initial prompt
