@@ -47,6 +47,7 @@ InfiniChat supports the following command-line arguments:
 | `--max_tokens` | Maximum number of tokens per response from each AI model (just leave it at default unless you know you need to change it) | 1000 |
 | `--debug` | Enable debug mode for additional output | False |
 | `--history_limit` | Maximum number of messages to keep in conversation history for each model | 15 |
+| `--delay` | Delay in seconds between streaming chunks (for slower, more readable streaming) | 0.0 |
 
 ### Examples
 
@@ -57,6 +58,9 @@ pipenv run python app.py --max_turns 2000
 
 # Run in debug mode
 pipenv run python app.py --debug
+
+# Add a delay for slower, more readable streaming
+pipenv run python app.py --delay 0.1
 ```
 
 After running, a conversation transcript will be saved to `conversation_history.txt`.

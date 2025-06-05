@@ -9,7 +9,6 @@ import argparse
 import sys
 import time
 
-DELAY = 0.00  # Reduced delay for faster streaming
 # MODEL_A_NAME = "deepseek-r1:latest"
 # MODEL_A_NAME = "qwen:latest"
 MODEL_A_NAME = "llama3:latest"
@@ -69,6 +68,7 @@ def simulate_conversation(
     initial_prompt="",
     debug_mode=False,
     history_limit=15,  # Maximum messages to keep in history per client
+    delay=0.00,  # Delay between streaming chunks
 ):
     """
     Simulate a conversation between two LLM clients with rich formatting.
@@ -167,7 +167,7 @@ def simulate_conversation(
                             padding=(1, 2),
                         )
                     )
-                    time.sleep(DELAY)
+                    time.sleep(delay)
 
                 # Get response from client A
                 # Add the message from client B (or initial prompt) to client A's history
@@ -231,7 +231,7 @@ def simulate_conversation(
                             padding=(1, 2),
                         )
                     )
-                    time.sleep(DELAY)
+                    time.sleep(delay)
 
                 # Get response from client B
                 # Add client A's response to client B's history
@@ -327,6 +327,12 @@ if __name__ == "__main__":
         default=15,
         help="Maximum number of messages to keep in conversation history for each model",
     )
+    parser.add_argument(
+        "--delay",
+        type=float,
+        default=0.00,
+        help="Delay in seconds between streaming chunks (default: 0.00 for faster streaming)",
+    )
     args = parser.parse_args()
 
     # Print welcome message
@@ -349,6 +355,7 @@ if __name__ == "__main__":
             initial_prompt=INITIAL_PROMPT,
             debug_mode=args.debug,
             history_limit=args.history_limit,
+            delay=args.delay,
         )
 
         # Save the conversation history to a file
