@@ -18,43 +18,10 @@ INITIAL_PROMPT = "Hello, who are you?"
 # Initialize Rich console
 console = Console()
 
-# Initialize clients with style information
-client_A = OllamaClient(
-    model_name=MODEL_A_NAME,
-    system_prompt=(
-        "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
-        "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
-        "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
-        "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
-        "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-    ),
-    # system_prompt=(
-    #     "You're an advanced AI designed to debate the best ice cream flavor. "
-    #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
-    #     "You feel strongly that the best ice cream flavor is vanilla, and you will argue this point passionately against your opponent. "
-    #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-    # ),
-)
-
 # Style for client A - blue theme
 CLIENT_A_STYLE = "bold blue"
 CLIENT_A_PANEL_STYLE = "blue"
 
-client_B = OllamaClient(
-    model_name=MODEL_B_NAME,
-    system_prompt=(
-        "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
-        "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
-        "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
-        "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 2-3 sentences per message. "
-    ),
-    # system_prompt=(
-    #     "You're an advanced AI designed to debate the best ice cream flavor. "
-    #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
-    #     "You feel strongly that the best ice cream flavor is chocolate chip cookie dough, and you will argue this point passionately against your opponent. "
-    #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-    # ),
-)
 # Style for client B - green theme
 CLIENT_B_STYLE = "bold green"
 CLIENT_B_PANEL_STYLE = "green"
@@ -333,13 +300,59 @@ if __name__ == "__main__":
         default=0.00,
         help="Delay in seconds between streaming chunks (default: 0.00 for faster streaming)",
     )
+    parser.add_argument(
+        "--model_a",
+        type=str,
+        default="llama3:latest",
+        help="Name of the first AI model to use",
+    )
+    parser.add_argument(
+        "--model_b",
+        type=str,
+        default="gemma3:12b",
+        help="Name of the second AI model to use",
+    )
     args = parser.parse_args()
+
+    # Initialize clients with parsed arguments
+    client_A = OllamaClient(
+        model_name=args.model_a,
+        system_prompt=(
+            "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
+            "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
+            "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
+            "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
+            "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+        ),
+        # system_prompt=(
+        #     "You're an advanced AI designed to debate the best ice cream flavor. "
+        #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
+        #     "You feel strongly that the best ice cream flavor is vanilla, and you will argue this point passionately against your opponent. "
+        #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+        # ),
+    )
+
+    client_B = OllamaClient(
+        model_name=args.model_b,
+        system_prompt=(
+            "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
+            "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
+            "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
+            "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 2-3 sentences per message. "
+        ),
+        # system_prompt=(
+        #     "You're an advanced AI designed to debate the best ice cream flavor. "
+        #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
+        #     "You feel strongly that the best ice cream flavor is chocolate chip cookie dough, and you will argue this point passionately against your opponent. "
+        #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+        # ),
+    )
 
     # Print welcome message
     console.print("")
     console.rule("[bold yellow]InfiniChat[/bold yellow]")
     console.print(
-        f"[italic]Watch as `{MODEL_A_NAME}` and `{MODEL_B_NAME}` have a conversation...[/italic]",
+        f"[italic]Watch as `{args.model_a}` and `{args.model_b}` have a conversation...[/italic]",
         justify="center",
     )
     console.print("")

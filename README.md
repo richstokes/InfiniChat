@@ -1,5 +1,5 @@
 # InfiniChat
-InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges. You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what happens. 
+InfiniChat is a command-line application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges. You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what happens. 
 
 <p align="center">
     <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="100%" alt="InfiniChat Screenshot">
@@ -48,6 +48,8 @@ InfiniChat supports the following command-line arguments:
 | `--debug` | Enable debug mode for additional output | False |
 | `--history_limit` | Maximum number of messages to keep in conversation history for each model | 15 |
 | `--delay` | Delay in seconds between streaming chunks (for slower, more readable streaming) | 0.0 |
+| `--model_a` | Name of the first AI model to use | llama3:latest |
+| `--model_b` | Name of the second AI model to use | gemma3:12b |
 
 ### Examples
 
@@ -61,6 +63,9 @@ pipenv run python app.py --debug
 
 # Add a delay for slower, more readable streaming
 pipenv run python app.py --delay 0.1
+
+# Use different models
+pipenv run python app.py --model_a qwen:latest --model_b deepseek-r1:latest
 ```
 
 After running, a conversation transcript will be saved to `conversation_history.txt`.
