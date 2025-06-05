@@ -43,7 +43,7 @@ InfiniChat supports the following command-line arguments:
 | Argument | Description | Default |
 |----------|-------------|---------|
 | `--max_turns` | Maximum number of conversation turns between the two AI models | 300 |
-| `--max_tokens` | Maximum number of tokens per response from each AI model | 1000 |
+| `--max_tokens` | Maximum number of tokens per response from each AI model (just leave it at default unless you know you need to change it) | 1000 |
 | `--debug` | Enable debug mode for additional output | False |
 | `--history_limit` | Maximum number of messages to keep in conversation history for each model | 15 |
 
@@ -51,8 +51,8 @@ InfiniChat supports the following command-line arguments:
 
 Run with custom settings:
 ```bash
-# Run with 10 conversation turns and 500 tokens per response
-pipenv run python app.py --max_turns 10 --max_tokens 500
+# Run with 2000 conversation turns!
+pipenv run python app.py --max_turns 2000
 
 # Run in debug mode
 pipenv run python app.py --debug

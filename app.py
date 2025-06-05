@@ -22,18 +22,19 @@ console = Console()
 # Initialize clients with style information
 client_A = OllamaClient(
     model_name=MODEL_A_NAME,
-    # system_prompt=(
-    #     "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
-    #     "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
-    #     "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
-    #     "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
-    # ),
     system_prompt=(
-        "You're an advanced AI designed to debate the best ice cream flavor. "
-        "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
-        "You feel strongly that the best ice cream flavor is vanilla, and you will argue this point passionately against your opponent. "
-        "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+        "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
+        "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
+        "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
+        "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
+        "You will be having a fun, lively discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 5 sentences per message. "
     ),
+    # system_prompt=(
+    #     "You're an advanced AI designed to debate the best ice cream flavor. "
+    #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
+    #     "You feel strongly that the best ice cream flavor is vanilla, and you will argue this point passionately against your opponent. "
+    #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+    # ),
 )
 
 # Style for client A - blue theme
@@ -42,17 +43,18 @@ CLIENT_A_PANEL_STYLE = "blue"
 
 client_B = OllamaClient(
     model_name=MODEL_B_NAME,
-    # system_prompt=(
-    #     "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
-    #     "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
-    #     "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. Limit yourself to about 3 stimulating paragraphs."
-    # ),
     system_prompt=(
-        "You're an advanced AI designed to debate the best ice cream flavor. "
-        "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
-        "You feel strongly that the best ice cream flavor is chocolate chip cookie dough, and you will argue this point passionately against your opponent. "
-        "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+        "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
+        "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
+        "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
+        "You will be having a fun, lively discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 5 sentences per message. "
     ),
+    # system_prompt=(
+    #     "You're an advanced AI designed to debate the best ice cream flavor. "
+    #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
+    #     "You feel strongly that the best ice cream flavor is chocolate chip cookie dough, and you will argue this point passionately against your opponent. "
+    #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+    # ),
 )
 # Style for client B - green theme
 CLIENT_B_STYLE = "bold green"
