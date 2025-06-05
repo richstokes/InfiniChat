@@ -1,6 +1,10 @@
 # InfiniChat
 InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges.
 
+<p align="center">
+    <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="50%" alt="InfiniChat Screenshot">
+</p>
+
 ## Features
 
 - **Full Conversation History**: Models maintain a record of the entire conversation, enabling more coherent interactions
