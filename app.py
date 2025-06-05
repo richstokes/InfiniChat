@@ -95,7 +95,7 @@ def simulate_conversation(
 
             # Display turn counter
             console.print(
-                f"[bold white on grey66]Round {turn+1}/{max_turns}[/bold white on grey66]",
+                f"[bold white on bright_black]Round {turn+1}/{max_turns}[/bold white on bright_black]",
                 justify="center",
             )
 
