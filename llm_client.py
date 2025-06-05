@@ -3,6 +3,9 @@ import json
 import platform
 import subprocess
 import sys
+from rich.console import Console
+
+console = Console()
 
 
 class OllamaClient:
@@ -26,7 +29,9 @@ class OllamaClient:
         # Check if the requested model is available
         self._check_model_availability()
 
-        print(f"✅ OllamaClient initialized with model: {self.model_name}")
+        console.print(
+            f"[bold green]OllamaClient initialized with model: {self.model_name}[/bold green]"
+        )
 
     def _check_ollama_availability(self):
         """
@@ -36,9 +41,13 @@ class OllamaClient:
         try:
             response = requests.get(f"{self.base_url}/tags", timeout=5)
             response.raise_for_status()
-            print("✅ Ollama server is available.")
+            console.print(
+                "[bold green]Ollama server is running and accessible.[/bold green]"
+            )
         except requests.RequestException as e:
-            print(f"❌ Error connecting to Ollama server: {e}")
+            console.print(
+                "[bold red]Ollama server is not available. Please install Ollama first.[/bold red]"
+            )
             self._provide_ollama_installation_guide()
             self._try_start_ollama_service()  # Attempt to start the service
             raise RuntimeError(
@@ -61,16 +70,22 @@ class OllamaClient:
             )
 
             if model_exists:
-                print(f"✅ Model '{self.model_name}' is available.")
+                console.print(
+                    f"[bold green]Model '{self.model_name}' is available locally.[/bold green]"
+                )
             else:
-                print(f"❌ Model '{self.model_name}' is not available locally.")
+                console.print(
+                    "[bold red]Model not found. Please pull the model first.[/bold red]"
+                )
                 self._provide_model_pull_guide()
                 raise RuntimeError(
                     f"Model '{self.model_name}' is not available. Please pull the model first."
                 )
 
         except requests.RequestException as e:
-            print(f"❌ Error checking model availability: {e}")
+            console.print(
+                "[bold red]Could not check model availability. Please check your connection.[/bold red]"
+            )
             raise RuntimeError(
                 f"Could not check if model '{self.model_name}' exists. Please check your connection."
             )
@@ -255,7 +270,9 @@ class OllamaClient:
 
         try:
             if os_name == "darwin" or os_name == "linux":  # macOS or Linux
-                print("Attempting to start Ollama service...")
+                console.print(
+                    "[bold yellow]Attempting to start Ollama service...[/bold yellow]"
+                )
 
                 # Check if ollama command is available
                 try:
@@ -282,7 +299,9 @@ class OllamaClient:
                     try:
                         response = requests.get(f"{self.base_url}/models", timeout=2)
                         if response.status_code == 200:
-                            print("✅ Successfully started Ollama service!")
+                            console.print(
+                                "[bold green]✅ Successfully started Ollama service![/bold green]"
+                            )
                             return True
                     except requests.RequestException:
                         pass
@@ -295,7 +314,9 @@ class OllamaClient:
             return False
 
         except Exception as e:
-            print(f"Error trying to start Ollama: {e}")
+            console.print(
+                "[bold red]Failed to start Ollama service. Please start it manually.[/bold red]"
+            )
             return False
 
     def _strip_think_tag(self, text: str) -> str:
