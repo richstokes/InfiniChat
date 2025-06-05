@@ -1,5 +1,5 @@
 # InfiniChat
-InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges.
+InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges :-) 
 
 <p align="center">
     <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="100%" alt="InfiniChat Screenshot">
@@ -32,6 +32,9 @@ Basic usage:
 ```bash
 pipenv run python app.py
 ```
+
+Edit the prompts in `app.py` to your liking.  
+
 
 ### Command-line Arguments
 
