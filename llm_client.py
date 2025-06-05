@@ -538,6 +538,11 @@ class OllamaClient:
         if not messages:
             return "No previous messages."
 
+        console.print(
+            f"[bold white on bright_black]Summarizing chat so far...[/bold white on bright_black]",
+            justify="center",
+        )
+
         # Create a temporary client with the same model for summarization
         # We don't want to modify the main client's message history
         summarizer = OllamaClient(self.model_name)
@@ -581,7 +586,7 @@ class OllamaClient:
 
         try:
             # Get the summary from the LLM (with a reasonable token limit)
-            summary = summarizer.chat(max_tokens=300)
+            summary = summarizer.chat(max_tokens=2000)
             return summary
         except Exception as e:
             # Fallback to a simpler summary approach if the LLM summarization fails
