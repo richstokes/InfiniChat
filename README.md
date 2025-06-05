@@ -46,7 +46,7 @@ InfiniChat supports the following command-line arguments:
 | `--max_turns` | Maximum number of conversation turns between the two AI models | 300 |
 | `--max_tokens` | Maximum number of tokens per response from each AI model (just leave it at default unless you know you need to change it) | 1000 |
 | `--debug` | Enable debug mode for additional output | False |
-| `--show_json | Show RAW JSON from chat api | False | 
+| `--show_json` | Show RAW JSON from chat api | False | 
 | `--history_limit` | Maximum number of messages to keep in conversation history for each model | 15 |
 | `--delay` | Delay in seconds between streaming chunks (for slower, more readable streaming) | 0.0 |
 | `--model_a` | Name of the first AI model to use | llama3:latest |
