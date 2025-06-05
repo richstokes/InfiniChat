@@ -1,5 +1,5 @@
 # InfiniChat
-InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges :-) 
+InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges. You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what happens. 
 
 <p align="center">
     <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="100%" alt="InfiniChat Screenshot">
@@ -17,7 +17,7 @@ InfiniChat is an application that simulates conversations between two LLMs using
 
 - Python 3.10+
 - [Ollama](https://ollama.com/download) installed and running
-- Required models (`qwen` and `gemma3:12b` by default) pulled in Ollama
+- Required models (`llama3` and `gemma3` by default) pulled in Ollama
 
 ## Installation
 
