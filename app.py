@@ -66,10 +66,6 @@ def simulate_conversation(
     """
     conversation_history = []
 
-    # Reset message history for both clients to ensure a fresh start
-    client_a.reset_message_history()
-    client_b.reset_message_history()
-
     # Re-add system prompts
     if client_a.system_prompt:
         client_a.add_message_to_history("system", client_a.system_prompt)
