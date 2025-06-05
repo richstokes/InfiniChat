@@ -18,6 +18,7 @@ InfiniChat is an application that simulates conversations between two LLMs using
 - Python 3.10+
 - [Ollama](https://ollama.com/download) installed and running
 - Required models (`llama3` and `gemma3` by default) pulled in Ollama
+- A "non-trivial" amount of RAM. This uses 30GB+ on my Macbook.
 
 ## Installation
 
