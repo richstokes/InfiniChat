@@ -475,7 +475,7 @@ class OllamaClient:
 
         return result
 
-    def trim_message_history(self, max_messages=10, keep_system_prompt=True):
+    def trim_message_history(self, max_messages, keep_system_prompt=True):
         """
         Trim the message history to prevent it from growing too large.
         Adds a summary of the trimmed messages to maintain conversation context.
@@ -483,8 +483,11 @@ class OllamaClient:
         :param max_messages: Maximum number of messages to keep (excluding system prompt)
         :param keep_system_prompt: Whether to always keep the system prompt
         """
+        print(f"Trimming message history to a maximum of {max_messages} messages.")
         if len(self.message_history) <= max_messages:
             return  # No need to trim
+
+        print(f"Current message history length: {len(self.message_history)}")
 
         # Determine which messages to trim
         if (
