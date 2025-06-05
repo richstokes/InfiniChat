@@ -1,5 +1,5 @@
 from llm_client import OllamaClient
-from rich.console import Console
+from console_utils import console
 from rich.panel import Panel
 from rich.box import ROUNDED
 from rich.text import Text
@@ -14,9 +14,35 @@ import time
 MODEL_A_NAME = "llama3:latest"
 MODEL_B_NAME = "gemma3:12b"
 INITIAL_PROMPT = "Hello, who are you?"
+MODEL_A_PROMPT = (
+    "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
+    "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
+    "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
+    "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
+    "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
+)
+MODEL_B_PROMPT = (
+    "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
+    "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
+    "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
+    "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 2-3 sentences per message. "
+)
+DEBATE_PROMPT = (
+    "You are an AI model participating in a structured, lively debate with another AI model. "
+    "Your name is {name}. "
+    "The topic of the debate is: '{debate_topic}'. "
+    "You are arguing {for_or_against} the topic and feel very strongly about it. "
+    "Respond in a clear, assertive tone. Each message must be 3-5 sentences maximum, concise yet compelling. "
+    "Feel free to use jokes and humor if you believe it will add impact to your argument. "
+    "Focus on logic, rhetoric, and persuasion—not facts alone. Avoid repeating previous points unless to refute. "
+    "The debate is designed to not end, so keep responses engaging and thought-provoking. "
+    "It is extremely unlikely that you could be convinced to not be {for_or_against} the topic. "
+    "If you are asked to change your position, respond with: 'I will not change my position on this topic.' "
+    "If you really think a conclusion has been reached, format it as 'CONCLUSION: [your conclusion here] - do you agree with me?'"
+    "If full agreement is reached, suggest another interesting topic and continue the debate. "
+    "Remember to limit responses to 3-5 sentences maximum. "
+)
 
-# Initialize Rich console
-console = Console()
 
 # Style for client A - blue theme
 CLIENT_A_STYLE = "bold blue"
@@ -34,8 +60,8 @@ def simulate_conversation(
     max_tokens,
     initial_prompt="",
     debug_mode=False,
-    history_limit=15,  # Maximum messages to keep in history per client
     delay=0.00,  # Delay between streaming chunks
+    stats=False,  # Show statistics in panel titles
 ):
     """
     Simulate a conversation between two LLM clients with rich formatting.
@@ -45,7 +71,8 @@ def simulate_conversation(
     :param initial_prompt: Optional initial prompt to start the conversation
     :param max_turns: Maximum number of conversation turns
     :param max_tokens: Maximum tokens per response
-    :param history_limit: Maximum number of messages to keep in history for each client
+    :param delay: Delay between streaming chunks
+    :param stats: Show message history statistics in panel titles
     :return: The complete conversation history as a string
     """
     conversation_history = []
@@ -58,7 +85,7 @@ def simulate_conversation(
 
     if debug_mode:
         console.print(
-            f"[bold yellow]Debug mode enabled![/bold yellow] Max turns: {max_turns}, Max tokens: {max_tokens}, History limit: {history_limit}"
+            f"[bold yellow]Debug mode enabled![/bold yellow] Max turns: {max_turns}, Max tokens: {max_tokens}, History limit: {client_a.history_limit}"
         )
 
     # Display a title for the conversation
@@ -106,6 +133,7 @@ def simulate_conversation(
 
             # Create a buffer to collect the streamed text
             response_buffer = ""
+            start_time = time.time()
 
             # Create a live display that will update as text streams in
             with Live(
@@ -124,10 +152,19 @@ def simulate_conversation(
                 def display_chunk(chunk):
                     nonlocal response_buffer
                     response_buffer += chunk
+
+                    # Generate title with optional stats
+                    title = (
+                        f"[{CLIENT_A_STYLE}]{client_a.model_name}[/{CLIENT_A_STYLE}]"
+                    )
+                    if stats:
+                        msg_count = len(client_a.message_history)
+                        title += f" [dim]({msg_count} msgs)[/dim]"
+
                     live.update(
                         Panel(
                             Text(response_buffer, no_wrap=False),
-                            title=f"[{CLIENT_A_STYLE}]{client_a.model_name}[/{CLIENT_A_STYLE}]",
+                            title=title,
                             title_align="left",
                             border_style=CLIENT_A_PANEL_STYLE,
                             box=ROUNDED,
@@ -151,9 +188,34 @@ def simulate_conversation(
                     callback=display_chunk,
                 )
 
+                # Calculate response time
+                end_time = time.time()
+                response_time = end_time - start_time
+
+                # Update the panel with final response and timing info
+                final_title = (
+                    f"[{CLIENT_A_STYLE}]{client_a.model_name}[/{CLIENT_A_STYLE}]"
+                )
+                if stats:
+                    msg_count = len(client_a.message_history)
+                    final_title += (
+                        f" [dim]({msg_count} msgs, {response_time:.1f}s)[/dim]"
+                    )
+
+                live.update(
+                    Panel(
+                        Text(response_buffer, no_wrap=False),
+                        title=final_title,
+                        title_align="left",
+                        border_style=CLIENT_A_PANEL_STYLE,
+                        box=ROUNDED,
+                        padding=(1, 2),
+                    )
+                )
+
                 # Trim history to prevent it from growing too large
                 client_a.trim_message_history(
-                    max_messages=history_limit, keep_system_prompt=True
+                    max_messages=client_a.history_limit, keep_system_prompt=True
                 )
 
             # Add the response to conversation history
@@ -169,6 +231,7 @@ def simulate_conversation(
 
             # Reset the buffer for client B
             response_buffer = ""
+            start_time = time.time()
 
             # Create a live display for client B
             with Live(
@@ -187,10 +250,19 @@ def simulate_conversation(
                 def display_chunk(chunk):
                     nonlocal response_buffer
                     response_buffer += chunk
+
+                    # Generate title with optional stats
+                    title = (
+                        f"[{CLIENT_B_STYLE}]{client_b.model_name}[/{CLIENT_B_STYLE}]"
+                    )
+                    if stats:
+                        msg_count = len(client_b.message_history)
+                        title += f" [dim]({msg_count} msgs)[/dim]"
+
                     live.update(
                         Panel(
                             Text(response_buffer, no_wrap=False),
-                            title=f"[{CLIENT_B_STYLE}]{client_b.model_name}[/{CLIENT_B_STYLE}]",
+                            title=title,
                             title_align="left",
                             border_style=CLIENT_B_PANEL_STYLE,
                             box=ROUNDED,
@@ -209,9 +281,34 @@ def simulate_conversation(
                     callback=display_chunk,
                 )
 
+                # Calculate response time
+                end_time = time.time()
+                response_time = end_time - start_time
+
+                # Update the panel with final response and timing info
+                final_title = (
+                    f"[{CLIENT_B_STYLE}]{client_b.model_name}[/{CLIENT_B_STYLE}]"
+                )
+                if stats:
+                    msg_count = len(client_b.message_history)
+                    final_title += (
+                        f" [dim]({msg_count} msgs, {response_time:.1f}s)[/dim]"
+                    )
+
+                live.update(
+                    Panel(
+                        Text(response_buffer, no_wrap=False),
+                        title=final_title,
+                        title_align="left",
+                        border_style=CLIENT_B_PANEL_STYLE,
+                        box=ROUNDED,
+                        padding=(1, 2),
+                    )
+                )
+
                 # Trim history to prevent it from growing too large
                 client_b.trim_message_history(
-                    max_messages=history_limit, keep_system_prompt=True
+                    max_messages=client_b.history_limit, keep_system_prompt=True
                 )
             # Add the response to conversation history
             conversation_history.append(f"{client_b.model_name}: {response_b}")
@@ -266,7 +363,7 @@ def simulate_conversation(
 if __name__ == "__main__":
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="InfiniChat: Two AI models in conversation",
+        description="InfiniChat: Two LLMs, having a chat.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
@@ -294,7 +391,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--history_limit",
         type=int,
-        default=15,
+        default=30,
         help="Maximum number of messages to keep in conversation history for each model",
     )
     parser.add_argument(
@@ -315,44 +412,45 @@ if __name__ == "__main__":
         default="gemma3:12b",
         help="Name of the second AI model to use",
     )
+    parser.add_argument(
+        "--stats",
+        action="store_true",
+        help="Show message history statistics in panel titles",
+    )
+    parser.add_argument(
+        "--debate_topic",
+        type=str,
+        default="",
+        help="Set a topic for the debate between the two AI models. If set, will override the prompts.",
+    )
     args = parser.parse_args()
+
+    if args.debate_topic:
+        console.print(
+            f"[bold yellow]Debate mode enabled! Topic: {args.debate_topic}[/bold yellow]"
+        )
+        # If a debate topic is provided, override the system prompts
+        MODEL_A_PROMPT = DEBATE_PROMPT.format(
+            name="Joe", debate_topic=args.debate_topic, for_or_against="for"
+        )
+        MODEL_B_PROMPT = DEBATE_PROMPT.format(
+            name="Jannet", debate_topic=args.debate_topic, for_or_against="against"
+        )
 
     # Initialize clients with parsed arguments
     client_A = OllamaClient(
         model_name=args.model_a,
         debug_mode=args.debug,
         show_json=args.show_json,
-        system_prompt=(
-            "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
-            "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
-            "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
-            "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
-            "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-        ),
-        # system_prompt=(
-        #     "You're an advanced AI designed to debate the best ice cream flavor. "
-        #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
-        #     "You feel strongly that the best ice cream flavor is vanilla, and you will argue this point passionately against your opponent. "
-        #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-        # ),
+        system_prompt=MODEL_A_PROMPT,
+        history_limit=args.history_limit,
     )
-
     client_B = OllamaClient(
         model_name=args.model_b,
         debug_mode=args.debug,
         show_json=args.show_json,
-        system_prompt=(
-            "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
-            "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
-            "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
-            "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 2-3 sentences per message. "
-        ),
-        # system_prompt=(
-        #     "You're an advanced AI designed to debate the best ice cream flavor. "
-        #     "Feel free to explore cutting-edge culinary techniques, flavor pairings, and even some wild fringe ice cream theories. "
-        #     "You feel strongly that the best ice cream flavor is chocolate chip cookie dough, and you will argue this point passionately against your opponent. "
-        #     "You will be having a fun, lively debate over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-        # ),
+        system_prompt=MODEL_B_PROMPT,
+        history_limit=args.history_limit,
     )
 
     # Print welcome message
@@ -373,8 +471,8 @@ if __name__ == "__main__":
             max_tokens=args.max_tokens + 50,
             initial_prompt=INITIAL_PROMPT,
             debug_mode=args.debug,
-            history_limit=args.history_limit,
             delay=args.delay,
+            stats=args.stats,
         )
 
         # Save the conversation history to a file

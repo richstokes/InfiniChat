@@ -3,9 +3,8 @@ import json
 import platform
 import subprocess
 import sys
-from rich.console import Console
-
-console = Console()
+from console_utils import console
+from ollama_utils import provide_ollama_installation_guide, provide_model_pull_guide
 
 
 class OllamaClient:
@@ -15,11 +14,15 @@ class OllamaClient:
         system_prompt: str = None,
         debug_mode: bool = False,
         show_json: bool = False,
+        quiet_mode: bool = False,
+        history_limit: int = 30,
     ):
+        self.quiet_mode = quiet_mode
         self.debug_mode = debug_mode
         self.show_json = show_json
         self.model_name = model_name
         self.system_prompt = system_prompt
+        self.history_limit = history_limit
         self.base_url = "http://localhost:11434/api"
         self.message_history = (
             []
@@ -37,9 +40,10 @@ class OllamaClient:
         # Check if the requested model is available
         self._check_model_availability()
 
-        console.print(
-            f"[bold green]OllamaClient initialized with model: {self.model_name}[/bold green]"
-        )
+        if not self.quiet_mode:
+            console.print(
+                f"[bold green]OllamaClient initialized with model: {self.model_name}[/bold green]"
+            )
 
     def _check_ollama_availability(self):
         """
@@ -49,14 +53,15 @@ class OllamaClient:
         try:
             response = requests.get(f"{self.base_url}/tags", timeout=5)
             response.raise_for_status()
-            console.print(
-                "[bold green]Ollama server is running and accessible.[/bold green]"
-            )
+            if not self.quiet_mode:
+                console.print(
+                    "[bold green]Ollama server is running and accessible.[/bold green]"
+                )
         except requests.RequestException as e:
             console.print(
                 "[bold red]Ollama server is not available. Please install Ollama first.[/bold red]"
             )
-            self._provide_ollama_installation_guide()
+            provide_ollama_installation_guide()
             self._try_start_ollama_service()  # Attempt to start the service
             raise RuntimeError(
                 "Ollama server is not available. Please follow the installation instructions above."
@@ -78,14 +83,15 @@ class OllamaClient:
             )
 
             if model_exists:
-                console.print(
-                    f"[bold green]Model '{self.model_name}' is available locally.[/bold green]"
-                )
+                if not self.quiet_mode:
+                    console.print(
+                        f"[bold green]Model '{self.model_name}' is available locally.[/bold green]"
+                    )
             else:
                 console.print(
                     "[bold red]Model not found. Please pull the model first.[/bold red]"
                 )
-                self._provide_model_pull_guide()
+                provide_model_pull_guide(self.model_name)
                 raise RuntimeError(
                     f"Model '{self.model_name}' is not available. Please pull the model first."
                 )
@@ -97,52 +103,6 @@ class OllamaClient:
             raise RuntimeError(
                 f"Could not check if model '{self.model_name}' exists. Please check your connection."
             )
-
-    def _provide_ollama_installation_guide(self):
-        """Provide platform-specific instructions for installing Ollama."""
-        os_name = platform.system().lower()
-
-        print("\n=== Ollama Installation Guide ===")
-
-        if os_name == "darwin":  # macOS
-            print("To install Ollama on macOS:")
-            print("1. Download Ollama from https://ollama.com/download")
-            print(
-                "2. Open the downloaded file and follow the installation instructions"
-            )
-            print("3. Start Ollama from your Applications folder")
-            print("\nAlternatively, install via Homebrew:")
-            print("   brew install ollama")
-            print("   ollama serve")
-        elif os_name == "linux":
-            print("To install Ollama on Linux:")
-            print("1. Run the following command:")
-            print("   curl -fsSL https://ollama.com/install.sh | sh")
-            print("2. Start the Ollama service:")
-            print("   ollama serve")
-        elif os_name == "windows":
-            print("To install Ollama on Windows:")
-            print("1. Download Ollama from https://ollama.com/download")
-            print("2. Run the installer and follow the installation instructions")
-            print("3. Start Ollama from the Start menu")
-        else:
-            print(
-                f"Please visit https://ollama.com/download for instructions on installing Ollama on {os_name}"
-            )
-
-        print(
-            "\nAfter installation, make sure the Ollama service is running before trying again."
-        )
-        print("===================================\n")
-
-    def _provide_model_pull_guide(self):
-        """Provide instructions for pulling the requested model."""
-        print(f"\n=== How to Pull Model '{self.model_name}' ===")
-        print(f"To download the '{self.model_name}' model, run:")
-        print(f"   ollama pull {self.model_name}")
-        print(
-            "\nIf using the desktop app, you can also pull models from the library tab."
-        )
 
     def generate_text(self, prompt: str, max_tokens: int = 100) -> str:
         """
@@ -375,6 +335,9 @@ class OllamaClient:
                 "Message history is empty. Add messages before calling chat()."
             )
 
+        # Auto-trim if the history is getting too long
+        self._auto_trim_if_needed()
+
         # Build the request payload
         payload = {
             "model": self.model_name,
@@ -413,6 +376,9 @@ class OllamaClient:
             raise ValueError(
                 "Message history is empty. Add messages before calling chat_stream()."
             )
+
+        # Auto-trim if the history is getting too long
+        self._auto_trim_if_needed()
 
         # Build the request payload
         payload = {
@@ -481,106 +447,58 @@ class OllamaClient:
     def trim_message_history(self, max_messages, keep_system_prompt=True):
         """
         Trim the message history to prevent it from growing too large.
-        Adds a summary of the trimmed messages to maintain conversation context.
+        Simple strategy: if history exceeds max_messages, summarize everything
+        (except system prompt) and replace history with just system prompt + summary.
 
-        :param max_messages: Maximum number of messages to keep (excluding system prompt)
+        :param max_messages: Maximum number of messages before triggering trim
         :param keep_system_prompt: Whether to always keep the system prompt
         """
         if self.debug_mode:
             print(f"Trimming message history to a maximum of {max_messages} messages.")
             print(f"Current message history length: {len(self.message_history)}")
 
+        # Check if trimming is needed
         if len(self.message_history) <= max_messages:
             if self.debug_mode:
                 print("No trimming needed - history is within limit.")
-            return  # No need to trim
+            return
 
-        # Determine which messages to trim
+        # Identify system prompt if it exists
+        system_prompt = None
+        start_index = 0
         if (
             keep_system_prompt
             and self.message_history
             and self.message_history[0].get("role") == "system"
         ):
             system_prompt = self.message_history[0]
+            start_index = 1
 
-            # We want to keep: system_prompt + summary + (max_messages - 2) recent messages
-            # So we need at least 3 messages total to make trimming worthwhile
-            messages_to_keep_count = max(
-                1, max_messages - 2
-            )  # At least 1 recent message
+        # Get all messages to summarize (everything except system prompt)
+        messages_to_summarize = self.message_history[start_index:]
 
-            if (
-                len(self.message_history) <= messages_to_keep_count + 1
-            ):  # +1 for system prompt
-                if self.debug_mode:
-                    print("Not enough messages to justify trimming with system prompt.")
-                return
-
-            # Get the messages to trim (everything except system prompt and the most recent ones)
-            total_messages = len(self.message_history)
-            trim_end_index = total_messages - messages_to_keep_count
-
-            messages_to_trim = self.message_history[
-                1:trim_end_index
-            ]  # Skip system prompt
-            recent_messages = self.message_history[trim_end_index:]  # Keep most recent
-
+        if not messages_to_summarize:
             if self.debug_mode:
-                print(
-                    f"With system prompt: trimming {len(messages_to_trim)} messages, keeping {len(recent_messages)} recent ones"
-                )
+                print("No messages to summarize - keeping current history.")
+            return
 
-            # Create a summary of the trimmed messages
-            summary = self._create_conversation_summary(messages_to_trim)
-            if self.debug_mode:
-                print(f"Generated summary: {summary}")
+        # Create summary of all conversation messages
+        summary = self._create_conversation_summary(messages_to_summarize)
+        summary_message = {
+            "role": "user",
+            "content": f"Summary of previous conversation: {summary}",
+        }
 
-            # Add the summary as a user message
-            summary_message = {
-                "role": "user",
-                "content": f"Summary of previous conversation: {summary}",
-            }
+        # Replace message history with just system prompt + summary
+        new_history = []
+        if system_prompt:
+            new_history.append(system_prompt)
+        new_history.append(summary_message)
 
-            # Reconstruct the message history with: system prompt + summary + recent messages
-            self.message_history = [system_prompt, summary_message] + recent_messages
-        else:
-            # No system prompt case
-            # We want to keep: summary + (max_messages - 1) recent messages
-            messages_to_keep_count = max(
-                1, max_messages - 1
-            )  # At least 1 recent message
-
-            if len(self.message_history) <= messages_to_keep_count:
-                print("Not enough messages to justify trimming without system prompt.")
-                return
-
-            # Get the messages to trim and keep
-            total_messages = len(self.message_history)
-            trim_end_index = total_messages - messages_to_keep_count
-
-            messages_to_trim = self.message_history[:trim_end_index]
-            recent_messages = self.message_history[trim_end_index:]
-
-            if self.debug_mode:
-                print(
-                    f"Without system prompt: trimming {len(messages_to_trim)} messages, keeping {len(recent_messages)} recent ones"
-                )
-
-            # Create a summary of the trimmed messages
-            summary = self._create_conversation_summary(messages_to_trim)
-            if self.debug_mode:
-                print(f"Generated summary: {summary}")
-
-            # Add the summary as a user message
-            summary_message = {
-                "role": "user",
-                "content": f"Summary of previous conversation: {summary}",
-            }
-
-            # Reconstruct the message history with: summary + recent messages
-            self.message_history = [summary_message] + recent_messages
+        self.message_history = new_history
 
         if self.debug_mode:
+            print(f"Created summary for {len(messages_to_summarize)} messages")
             print(
                 f"Message history after trimming: {len(self.message_history)} messages"
             )
@@ -598,14 +516,9 @@ class OllamaClient:
         if not messages:
             return "No previous messages."
 
-        console.print(
-            f"[bold white on bright_black]Summarizing chat so far...[/bold white on bright_black]",
-            justify="center",
-        )
-
         # Create a temporary client with the same model for summarization
         # We don't want to modify the main client's message history
-        summarizer = OllamaClient(self.model_name)
+        summarizer = OllamaClient(self.model_name, quiet_mode=True)
 
         # Prepare the prompt for summarization
         summarization_prompt = {
@@ -693,3 +606,20 @@ class OllamaClient:
             )
 
         return "\n".join(summary_points)
+
+    def _auto_trim_if_needed(self, max_messages=None):
+        """
+        Automatically trim message history if it's getting too long.
+        This should be called before chat operations to prevent unbounded growth.
+        Uses aggressive trimming to keep only essential context.
+
+        :param max_messages: The threshold at which to trigger trimming.
+                           If None, uses self.history_limit
+        """
+        if max_messages is None:
+            max_messages = self.history_limit
+
+        if len(self.message_history) > max_messages:
+            # Aggressive trimming: reduce to minimal viable history
+            # This will result in: system_prompt + summary + last_exchange (3-4 messages total)
+            self.trim_message_history(max_messages)

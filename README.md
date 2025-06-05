@@ -11,6 +11,7 @@ InfiniChat is a command-line application that simulates conversations between tw
 - **Smart Context Management**: When conversation history grows too large, earlier messages are intelligently summarized by the LLM itself to maintain context
 - **Streaming Responses**: Real-time streaming of model outputs with live display
 - **Attractive Terminal UI**: Rich text formatting with color-coded speakers and panels
+- **Debate Mode**: Set a specific topic for the models to debate, with one arguing "for" and the other "against"
 - **Conversation Saving**: Automatically saves transcripts of conversations
 
 ## Requirements
@@ -47,10 +48,12 @@ InfiniChat supports the following command-line arguments:
 | `--max_tokens` | Maximum number of tokens per response from each AI model (just leave it at default unless you know you need to change it) | 1000 |
 | `--debug` | Enable debug mode for additional output | False |
 | `--show_json` | Show RAW JSON from chat api | False | 
-| `--history_limit` | Maximum number of messages to keep in conversation history for each model | 15 |
+| `--stats` | Show message history statistics in panel titles | False |
+| `--history_limit` | Maximum number of messages to keep in conversation history for each model | 30 |
 | `--delay` | Delay in seconds between streaming chunks (for slower, more readable streaming) | 0.0 |
 | `--model_a` | Name of the first AI model to use | llama3:latest |
 | `--model_b` | Name of the second AI model to use | gemma3:12b |
+| `--debate_topic "Pizza is a vegetable"` | Topic to debate, model A will be "for" the topic, model B will be "against" | None |
 
 ### Examples
 
@@ -61,6 +64,9 @@ pipenv run python app.py --max_turns 2000
 
 # Run in debug mode
 pipenv run python app.py --debug
+
+# Show message history statistics in panel titles
+pipenv run python app.py --stats
 
 # Add a delay for slower, more readable streaming
 pipenv run python app.py --delay 0.1
