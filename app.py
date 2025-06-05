@@ -65,7 +65,16 @@ def simulate_conversation(
     :return: The complete conversation history as a string
     """
     conversation_history = []
-    current_prompt = initial_prompt
+
+    # Reset message history for both clients to ensure a fresh start
+    client_a.reset_message_history()
+    client_b.reset_message_history()
+
+    # Re-add system prompts
+    if client_a.system_prompt:
+        client_a.add_message_to_history("system", client_a.system_prompt)
+    if client_b.system_prompt:
+        client_b.add_message_to_history("system", client_b.system_prompt)
 
     if debug_mode:
         console.print(
@@ -95,6 +104,9 @@ def simulate_conversation(
             )
         )
         conversation_history.append(f"Initial: {initial_prompt}")
+
+        # Add initial prompt to client B's history (client A will generate first response)
+        client_b.add_message_to_history("user", initial_prompt)
 
     try:
         for turn in range(max_turns):
@@ -145,8 +157,16 @@ def simulate_conversation(
                     time.sleep(DELAY)
 
                 # Get response from client A
-                response_a = client_a.generate_stream_with_callback(
-                    current_prompt,
+                # Add the message from client B (or initial prompt) to client A's history
+                if turn == 0:
+                    # First turn: Use the initial prompt
+                    client_a.add_message_to_history("user", initial_prompt)
+                else:
+                    # Subsequent turns: Use the previous response from client B
+                    client_a.add_message_to_history("user", response_b)
+
+                # Generate a response using chat API with full conversation history
+                response_a = client_a.chat_stream_with_callback(
                     max_tokens,
                     callback=display_chunk,
                     debug_mode=debug_mode,
@@ -196,8 +216,11 @@ def simulate_conversation(
                     time.sleep(DELAY)
 
                 # Get response from client B
-                response_b = client_b.generate_stream_with_callback(
-                    response_a,
+                # Add client A's response to client B's history
+                client_b.add_message_to_history("user", response_a)
+
+                # Generate a response using chat API with full conversation history
+                response_b = client_b.chat_stream_with_callback(
                     max_tokens,
                     callback=display_chunk,
                     debug_mode=debug_mode,
@@ -205,9 +228,6 @@ def simulate_conversation(
 
             # Add the response to conversation history
             conversation_history.append(f"{client_b.model_name}: {response_b}")
-
-            # Update the prompt for the next turn
-            current_prompt = response_b
 
             # If debug mode is enabled, prompt the user to continue or stop after each turn
             if debug_mode:

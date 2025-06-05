@@ -1,5 +1,5 @@
 # InfiniChat
-InfiniChat is an application that simulates conversations between two LLMs using Ollama. 
+InfiniChat is an application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges just like ChatGPT.
 
 ## Requirements
 

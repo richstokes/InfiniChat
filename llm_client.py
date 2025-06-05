@@ -14,6 +14,12 @@ class OllamaClient:
             []
         )  # Initialize an empty message history, used for chat models
 
+        # Add system prompt to message history if provided
+        if self.system_prompt:
+            self.message_history.append(
+                {"role": "system", "content": self.system_prompt}
+            )
+
         # Check if Ollama is installed and running
         self._check_ollama_availability()
 
@@ -318,3 +324,140 @@ class OllamaClient:
         cleaned_content = re.sub(r"\n{3,}", "\n\n", cleaned_content)
 
         return cleaned_content.strip()
+
+    def reset_message_history(self):
+        """
+        Reset the message history for chat models.
+        This is useful for starting a new conversation context.
+        """
+        self.message_history = []
+        print("✅ Message history reset.")
+
+    def add_message_to_history(self, role: str, content: str):
+        """
+        Add a message to the message history for chat models.
+        :param role: The role of the message sender ('user' or 'assistant').
+        :param content: The content of the message.
+        """
+        self.message_history.append({"role": role, "content": content})
+        # print(f"✅ Added message to history: {role} - {content}")
+
+    def chat(self, max_tokens: int = 100, debug_mode=False) -> str:
+        """
+        Generate a chat response using the specified model and the current message history.
+
+        :param max_tokens: The maximum number of tokens to generate.
+        :param debug_mode: Whether to print debug information.
+        :return: The generated chat response.
+        """
+        if not self.message_history:
+            raise ValueError(
+                "Message history is empty. Add messages before calling chat()."
+            )
+
+        # Build the request payload
+        payload = {
+            "model": self.model_name,
+            "messages": self.message_history,
+            "options": {"num_predict": max_tokens},
+            "stream": False,
+        }
+
+        if debug_mode:
+            print(f"\n****\nPayload for chat: {json.dumps(payload, indent=2)} \n****")
+
+        response = requests.post(
+            f"{self.base_url}/chat",
+            json=payload,
+        )
+        response.raise_for_status()
+        data = response.json()
+        chat_response = data.get("message", {}).get("content", "")
+
+        # Add the assistant's response to the message history
+        self.message_history.append({"role": "assistant", "content": chat_response})
+
+        if debug_mode:
+            print(f"Chat response: {chat_response}")
+
+        return chat_response
+
+    def chat_stream(self, max_tokens: int = 100, debug_mode=False):
+        """
+        Generate a streaming chat response using the specified model and the current message history.
+
+        :param max_tokens: The maximum number of tokens to generate.
+        :param debug_mode: Whether to print debug information.
+        :return: A generator yielding chunks of the generated chat response.
+        """
+        if not self.message_history:
+            raise ValueError(
+                "Message history is empty. Add messages before calling chat_stream()."
+            )
+
+        # Build the request payload
+        payload = {
+            "model": self.model_name,
+            "messages": self.message_history,
+            "options": {"num_predict": max_tokens},
+            "stream": True,
+        }
+
+        if debug_mode:
+            print(
+                f"\n****\nPayload for streaming chat: {json.dumps(payload, indent=2)} \n****"
+            )
+
+        response = requests.post(
+            f"{self.base_url}/chat",
+            json=payload,
+            stream=True,
+        )
+        response.raise_for_status()
+
+        full_response = ""
+        for line in response.iter_lines():
+            if line:
+                try:
+                    data = json.loads(line)
+                    message = data.get("message", {})
+                    chunk = message.get("content", "")
+                    if chunk:
+                        full_response += chunk
+                        yield chunk
+
+                    # Check if done
+                    if data.get("done", False):
+                        break
+                except json.JSONDecodeError:
+                    print(f"Error decoding JSON: {line}")
+                    continue
+
+        # After streaming is complete, add the full response to message history
+        self.message_history.append({"role": "assistant", "content": full_response})
+
+    def chat_stream_with_callback(
+        self, max_tokens: int = 100, callback=None, debug_mode=False
+    ):
+        """
+        Generate a streaming chat response and apply a callback function to each chunk.
+        Also returns the complete response as a single string.
+
+        :param max_tokens: The maximum number of tokens to generate.
+        :param callback: A function to call with each chunk (e.g., to display it).
+        :param debug_mode: Whether to print debug information.
+        :return: The complete generated chat response as a string.
+        """
+        result = ""
+        for chunk in self.chat_stream(max_tokens, debug_mode=debug_mode):
+            # Apply the callback to each chunk if provided
+            if callback:
+                callback(chunk)
+
+            # Accumulate the result (not needed since we already add to history in chat_stream)
+            result += chunk
+
+        # Strip think tags if they exist
+        result = self._strip_think_tag(result)
+
+        return result
