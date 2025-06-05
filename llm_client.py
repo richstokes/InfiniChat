@@ -10,14 +10,17 @@ class OllamaClient:
         self.model_name = model_name
         self.system_prompt = system_prompt
         self.base_url = "http://localhost:11434/api"
-
-        print(f"✅ OllamaClient initialized with model: {self.model_name}")
+        self.message_history = (
+            []
+        )  # Initialize an empty message history, used for chat models
 
         # Check if Ollama is installed and running
         self._check_ollama_availability()
 
         # Check if the requested model is available
         self._check_model_availability()
+
+        print(f"✅ OllamaClient initialized with model: {self.model_name}")
 
     def _check_ollama_availability(self):
         """
