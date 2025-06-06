@@ -35,7 +35,7 @@ Basic usage:
 pipenv run python app.py
 ```
 
-Edit the prompts in `app.py` to your liking.  
+Edit the prompts in `prompts.py` to your liking.  
 
 
 ### Command-line Arguments
