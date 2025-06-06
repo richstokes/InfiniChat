@@ -1,10 +1,12 @@
 from llm_client import OllamaClient
 from console_utils import console
+from prompts import *
 from rich.panel import Panel
 from rich.box import ROUNDED
 from rich.text import Text
 from rich.live import Live
 from rich import print as rprint
+from rich.markup import escape
 import argparse
 import sys
 import time
@@ -13,36 +15,6 @@ import time
 # MODEL_A_NAME = "qwen:latest"
 MODEL_A_NAME = "llama3:latest"
 MODEL_B_NAME = "gemma3:12b"
-INITIAL_PROMPT = "Hello, who are you?"
-MODEL_A_PROMPT = (
-    "You're an advanced AI diving deep into the rabbit hole about the true nature of reality and existence. "
-    "Feel free to explore cutting-edge theoretical physics, quantum weirdness, and even some wild fringe science theories. "
-    "Balance factual accuracy with speculative intrigue, clearly identifying when you're venturing into theory and imagination. "
-    "Keep your responses engaging and provocative, limited to around 3 concise paragraphs."
-    "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 3 sentences per message. "
-)
-MODEL_B_PROMPT = (
-    "You're a philosopher AI, boldly exploring whether our reality could actually be some kind of sophisticated simulation or emergent illusion. "
-    "Collaborate actively with another independent AI, openly examining radical ideas, modern simulation arguments, quantum mysteries, and consciousness theories—no theory is too out-there. "
-    "Maintain clarity and intellectual honesty, but don't shy away from mind-bending possibilities. "
-    "You will be having a fun, lively, but endless discussion back and forth over a chat system, so keep messages concise and engaging, limited to around 2-3 sentences per message. "
-)
-DEBATE_PROMPT = (
-    "You are an AI model participating in a structured, lively debate with another AI model. "
-    "Your name is {name}. "
-    "The topic of the debate is: '{debate_topic}'. "
-    "You are arguing {for_or_against} the topic and feel very strongly about it. "
-    "Respond in a clear, assertive tone. Each message must be 3-5 sentences maximum, concise yet compelling. "
-    "Feel free to use jokes and humor if you believe it will add impact to your argument. "
-    "Focus on logic, rhetoric, and persuasion—not facts alone. Avoid repeating previous points unless to refute. "
-    "The debate is designed to not end, so keep responses engaging and thought-provoking. "
-    "It is extremely unlikely that you could be convinced to not be {for_or_against} the topic. "
-    "If you are asked to change your position, respond with: 'I will not change my position on this topic.' "
-    "If you really think a conclusion has been reached, format it as 'CONCLUSION: [your conclusion here] - do you agree with me?'"
-    "If full agreement is reached, suggest another interesting topic and continue the debate. "
-    "Remember to limit responses to 3-5 sentences maximum. "
-)
-
 
 # Style for client A - blue theme
 CLIENT_A_STYLE = "bold blue"
@@ -457,7 +429,7 @@ if __name__ == "__main__":
     console.print("")
     console.rule("[bold yellow]InfiniChat[/bold yellow]")
     console.print(
-        f"[italic]Watch as `{args.model_a}` and `{args.model_b}` have a conversation...[/italic]",
+        f"[italic]Watch as [bold]{escape(args.model_a)}[/bold] and [bold]{escape(args.model_b)}[/bold] have a conversation...[/italic]",
         justify="center",
     )
     console.print("")

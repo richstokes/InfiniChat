@@ -2,7 +2,7 @@
 InfiniChat is a command-line application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges. You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what happens. 
 
 <p align="center">
-    <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="100%" alt="InfiniChat Screenshot">
+    <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="0%" alt="InfiniChat Screenshot">
 </p>
 
 ## Features
@@ -16,7 +16,7 @@ InfiniChat is a command-line application that simulates conversations between tw
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.+
 - [Ollama](https://ollama.com/download) installed and running
 - Required models (`llama3` and `gemma3` by default) pulled in Ollama
 - A "non-trivial" amount of RAM. This uses 30GB+ on my Macbook.
@@ -73,6 +73,9 @@ pipenv run python app.py --delay 0.1
 
 # Use different models
 pipenv run python app.py --model_a qwen:latest --model_b deepseek-r1:latest
+
+# Start a debate
+pipenv run python app.py --debate_topic "Dogs are better than cats"
 ```
 
 After running, a conversation transcript will be saved to `conversation_history.txt`.
