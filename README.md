@@ -1,5 +1,5 @@
 # InfiniChat
-InfiniChat is a command-line application that simulates conversations between two LLMs using Ollama. The models maintain full conversation history, allowing them to reference previous exchanges. No real point, I just find it interesting to watch the exchanges. You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what happens. 
+InfiniChat is a command-line application that simulates conversations between two LLMs using Ollama. Just for fun really / I find it interesting to watch the exchanges. You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what topics they spiral in to. 
 
 <p align="center">
     <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="0%" alt="InfiniChat Screenshot">
