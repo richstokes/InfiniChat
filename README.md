@@ -17,7 +17,7 @@ InfiniChat is a command-line application that simulates conversations between tw
 ## Requirements
 
 - Python 3.+
-- [Ollama](https://ollama.com/download) installed and running, with the models you wish to use pulled
+- [Ollama](https://ollama.com/download) installed and running
 - Required models (`llama3` and `gemma3` by default) pulled in Ollama
 - A "non-trivial" amount of RAM. This uses 30GB+ on my Macbook.
 
