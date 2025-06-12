@@ -78,4 +78,4 @@ pipenv run python app.py --model_a qwen:latest --model_b deepseek-r1:latest
 pipenv run python app.py --debate_topic "Dogs are better than cats"
 ```
 
-After running, a conversation transcript will be saved to `conversation_history.txt`.
+After running, a conversation transcript will be saved to `conversation_history.txt`. This will be overwritten each run, so copy it somewhere if you wish to keep it. 
