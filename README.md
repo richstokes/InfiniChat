@@ -54,6 +54,8 @@ InfiniChat supports the following command-line arguments:
 | `--model_a` | Name of the first AI model to use | llama3:latest |
 | `--model_b` | Name of the second AI model to use | gemma3:12b |
 | `--debate_topic "Pizza is a vegetable"` | Topic to debate, model A will be "for" the topic, model B will be "against" | None |
+| `--model_a_prompt "Your custom prompt"` | Custom system prompt for model A (overrides default and debate prompts) | None |
+| `--model_b_prompt "Your custom prompt"` | Custom system prompt for model B (overrides default and debate prompts) | None |
 
 ### Examples
 
@@ -76,6 +78,12 @@ pipenv run python app.py --model_a qwen:latest --model_b deepseek-r1:latest
 
 # Start a debate
 pipenv run python app.py --debate_topic "Dogs are better than cats"
+
+# Use custom prompts for both models
+pipenv run python app.py --model_a_prompt "You are a cheerful assistant who loves to help people" --model_b_prompt "You are a serious academic who prefers formal language"
+
+# Override just one model's prompt
+pipenv run python app.py --model_a_prompt "You are a pirate who speaks in nautical terms"
 ```
 
 After running, a conversation transcript will be saved to `conversation_history.txt`. This will be overwritten each run, so copy it somewhere if you wish to keep it. 

@@ -395,6 +395,18 @@ if __name__ == "__main__":
         default="",
         help="Set a topic for the debate between the two AI models. If set, will override the prompts.",
     )
+    parser.add_argument(
+        "--model_a_prompt",
+        type=str,
+        default="",
+        help="Custom system prompt for model A. If provided, will override the default MODEL_A_PROMPT.",
+    )
+    parser.add_argument(
+        "--model_b_prompt",
+        type=str,
+        default="",
+        help="Custom system prompt for model B. If provided, will override the default MODEL_B_PROMPT.",
+    )
     args = parser.parse_args()
 
     if args.debate_topic:
@@ -408,6 +420,15 @@ if __name__ == "__main__":
         MODEL_B_PROMPT = DEBATE_PROMPT.format(
             name="Jannet", debate_topic=args.debate_topic, for_or_against="against"
         )
+
+    # Handle custom prompts - these override default prompts and debate prompts
+    if args.model_a_prompt:
+        MODEL_A_PROMPT = args.model_a_prompt
+        console.print("[bold blue]Using custom prompt for Model A[/bold blue]")
+
+    if args.model_b_prompt:
+        MODEL_B_PROMPT = args.model_b_prompt
+        console.print("[bold green]Using custom prompt for Model B[/bold green]")
 
     # Initialize clients with parsed arguments
     client_A = OllamaClient(
