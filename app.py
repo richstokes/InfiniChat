@@ -69,7 +69,7 @@ def simulate_conversation(
     # Display a title for the conversation
     console.print(
         Panel.fit(
-            "🤖 [bold yellow]InfiniChat AI Conversation Beginning![/bold yellow] 🤖",
+            f"[bold yellow]AI Conversation Beginning![/bold yellow] 🤖\nWatch as [bold]{escape(args.model_a)}[/bold] and [bold]{escape(args.model_b)}[/bold] have a conversation.",
             box=ROUNDED,
             border_style="yellow",
             padding=(1, 2),
@@ -461,10 +461,8 @@ if __name__ == "__main__":
 
     # Print welcome message
     console.print("")
-    console.rule("[bold yellow]InfiniChat[/bold yellow]")
-    console.print(
-        f"[italic]Watch as [bold]{escape(args.model_a)}[/bold] and [bold]{escape(args.model_b)}[/bold] have a conversation...[/italic]",
-        justify="center",
+    console.rule(
+        "[bold yellow]InfiniChat - github.com/richstokes/InfiniChat[/bold yellow]"
     )
     console.print("")
 
