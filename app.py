@@ -361,9 +361,9 @@ if __name__ == "__main__":
         help="Show raw JSON responses from the models",
     )
     parser.add_argument(
-        "--log_json",
+        "--log_history",
         action="store_true",
-        help="Log JSON state to a file",
+        help="Log message_history state to a file",
     )
     parser.add_argument(
         "--history_limit",
@@ -442,6 +442,7 @@ if __name__ == "__main__":
         show_json=args.show_json,
         system_prompt=MODEL_A_PROMPT,
         history_limit=args.history_limit,
+        log_history=args.log_history,
     )
     client_B = OllamaClient(
         model_name=args.model_b,
@@ -449,6 +450,7 @@ if __name__ == "__main__":
         show_json=args.show_json,
         system_prompt=MODEL_B_PROMPT,
         history_limit=args.history_limit,
+        log_history=args.log_history,
     )
 
     # Print welcome message

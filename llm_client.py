@@ -11,6 +11,8 @@ from ollama_utils import (
     check_model_availability,
 )
 
+HISTORY_LOG_FILE = "message_history.log"
+
 
 class OllamaClient:
     def __init__(
@@ -21,6 +23,7 @@ class OllamaClient:
         show_json: bool = False,
         quiet_mode: bool = False,
         history_limit: int = 30,
+        log_history: bool = False,
     ):
         self.quiet_mode = quiet_mode
         self.debug_mode = debug_mode
@@ -28,6 +31,7 @@ class OllamaClient:
         self.model_name = model_name
         self.system_prompt = system_prompt
         self.history_limit = history_limit
+        self.log_history = log_history
         self.base_url = "http://localhost:11434/api"
         self.message_history = (
             []
@@ -139,6 +143,10 @@ class OllamaClient:
         """
         self.message_history.append({"role": role, "content": content})
         # print(f"✅ Added message to history: {role} - {content}")
+        if self.log_history:
+            with open(HISTORY_LOG_FILE, "w") as f:
+                # f.write(f"{role}: {content}\n")
+                f.write(json.dumps(self.message_history, indent=2))
 
     def chat_stream(self, max_tokens: int = 100):
         """
