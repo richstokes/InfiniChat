@@ -53,11 +53,23 @@ def simulate_conversation(
         console.print(
             f"[bold yellow]Debug mode enabled![/bold yellow] Max turns: {max_turns}, Max tokens: {max_tokens}, History limit: {client_a.history_limit}"
         )
+        console.print(
+            f"[bold yellow]Model A:[/bold yellow] {client_a.model_name}, [bold yellow]Model B:[/bold yellow] {client_b.model_name}"
+        )
+        console.print(
+            f"[bold yellow]Initial prompt:[/bold yellow] {initial_prompt if initial_prompt else 'None'}"
+        )
+        console.print(
+            f"[bold yellow]Model A Prompt:[/bold yellow] {client_a.system_prompt}"
+        )
+        console.print(
+            f"[bold yellow]Model B Prompt:[/bold yellow] {client_b.system_prompt}"
+        )
 
     # Display a title for the conversation
     console.print(
         Panel.fit(
-            "🤖 [bold yellow]InfiniChat: AI Conversation[/bold yellow] 🤖",
+            "🤖 [bold yellow]InfiniChat AI Conversation Beginning![/bold yellow] 🤖",
             box=ROUNDED,
             border_style="yellow",
             padding=(1, 2),
