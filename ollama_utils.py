@@ -199,10 +199,6 @@ def check_ollama_availability(
     try:
         response = requests.get(f"{base_url}/tags", timeout=5)
         response.raise_for_status()
-        if not quiet_mode:
-            console.print(
-                "[bold green]Ollama server is running and accessible.[/bold green]"
-            )
     except requests.RequestException as e:
         console.print(
             "[bold red]Ollama server is not available. Please install Ollama first.[/bold red]"
