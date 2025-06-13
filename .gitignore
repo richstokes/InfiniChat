@@ -1,5 +1,6 @@
 # Byte-compiled / optimized / DLL files
 conversation_history.txt
+message_history.log
 
 __pycache__/
 *.py[cod]
