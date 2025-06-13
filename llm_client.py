@@ -69,6 +69,49 @@ class OllamaClient:
                 # f.write(f"{role}: {content}\n")
                 f.write(json.dumps(self.message_history, indent=2))
 
+    def chat(self, max_tokens: int = 1_000) -> str:
+        """
+        Generate a chat response using the specified model and the current message history.
+        :param max_tokens: The maximum number of tokens to generate.
+        :return: The generated chat response.
+        """
+
+        if not self.message_history:
+            raise ValueError(
+                "Message history is empty. Add messages before calling chat()."
+            )
+
+        # Auto-trim if the history is getting too long
+        self._auto_trim_if_needed()
+
+        # Build the request payload
+        payload = {
+            "model": self.model_name,
+            "messages": self.message_history,
+            "options": {"num_predict": max_tokens},
+            "stream": False,
+        }
+
+        if self.show_json:
+            print(f"\n****\nPayload for chat: {json.dumps(payload, indent=2)} \n****")
+
+        response = requests.post(
+            f"{self.base_url}/chat",
+            json=payload,
+        )
+
+        response.raise_for_status()
+        data = response.json()
+        chat_response = data.get("message", {}).get("content", "")
+
+        # Add the assistant's response to the message history
+        self.message_history.append({"role": "assistant", "content": chat_response})
+
+        if self.debug_mode:
+            print(f"Chat response: {chat_response}")
+
+        return chat_response
+
     def chat_stream(self, max_tokens: int = 100):
         """
         Generate a streaming chat response using the specified model and the current message history.
@@ -190,7 +233,7 @@ class OllamaClient:
         summary = self._create_conversation_summary(messages_to_summarize)
         summary_message = {
             "role": "user",
-            "content": f"Summary of previous conversation: {summary}",
+            "content": f"Summary of conversation so far: {summary}",
         }
 
         # Replace message history with just system prompt + summary
@@ -231,7 +274,7 @@ class OllamaClient:
                 "You are a helpful assistant tasked with creating a concise summary of a conversation. "
                 "The summary should capture the main topics, key points, and any important information "
                 "from the conversation. Be brief but comprehensive. Your summary will be used to provide "
-                "context for a continuing conversation."
+                "context for continuing the conversation."
             ),
         }
 
