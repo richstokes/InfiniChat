@@ -4,6 +4,7 @@ import platform
 import subprocess
 import sys
 from console_utils import console
+from rich.panel import Panel
 from ollama_utils import (
     provide_ollama_installation_guide,
     provide_model_pull_guide,
@@ -38,6 +39,7 @@ class OllamaClient:
         self.message_history = (
             []
         )  # Initialize an empty message history, used for chat models
+        self.trim_count = 0  # Counter for how many times we've trimmed the history
 
         # Add system prompt to message history if provided
         if self.system_prompt:
@@ -373,7 +375,14 @@ class OllamaClient:
         if len(self.message_history) > max_messages:
             # Aggressive trimming: reduce to minimal viable history
             # This will result in: system_prompt + summary + last_exchange (3-4 messages total)
+            console.print(
+                Panel(
+                    "[bold yellow]Trimming Messages[/bold yellow]",
+                    border_style="yellow",
+                )
+            )
             self.trim_message_history(max_messages)
+            self.trim_count += 1
 
     def _calculate_message_history_size(self):
         """

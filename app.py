@@ -374,7 +374,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--history_limit",
         type=int,
-        default=500,
+        default=100,
         help="Maximum number of messages to keep in conversation history for each model before summarizing and trimming",
     )
     parser.add_argument(
