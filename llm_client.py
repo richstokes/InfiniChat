@@ -67,6 +67,10 @@ class OllamaClient:
         if self.log_history:
             with open(HISTORY_LOG_FILE, "w") as f:
                 f.write(f"Message History Size: {len(self.message_history)}\n")
+                f.write(
+                    f"Message History in Bytes: {sys.getsizeof(self.message_history)}\n"
+                )
+                f.write(f"Model Name: {self.model_name}\n")
                 f.write(json.dumps(self.message_history, indent=2))
 
     def chat(self, max_tokens: int = 1_000) -> str:
