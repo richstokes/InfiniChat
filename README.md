@@ -76,7 +76,7 @@ pipenv run python app.py --delay 0.1
 pipenv run python app.py --model_a qwen:latest --model_b deepseek-r1:latest
 
 # Start a debate
-pipenv run python app.py --debate_topic "Dogs are better than cats"
+pipenv run python app.py --debate_topic "Coffee is better than tea"
 
 # Use custom prompts for both models
 pipenv run python app.py --model_a_prompt "You are a cheerful assistant who loves to help people" --model_b_prompt "You are a serious academic who prefers formal language"
