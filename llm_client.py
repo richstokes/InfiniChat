@@ -8,6 +8,7 @@ from ollama_utils import (
     provide_ollama_installation_guide,
     provide_model_pull_guide,
     strip_think_tag,
+    check_model_availability,
 )
 
 
@@ -42,7 +43,7 @@ class OllamaClient:
         self._check_ollama_availability()
 
         # Check if the requested model is available
-        self._check_model_availability()
+        check_model_availability(self.model_name, self.base_url, self.quiet_mode)
 
         if not self.quiet_mode:
             console.print(
@@ -69,43 +70,6 @@ class OllamaClient:
             self._try_start_ollama_service()  # Attempt to start the service
             raise RuntimeError(
                 "Ollama server is not available. Please follow the installation instructions above."
-            )
-
-    def _check_model_availability(self):
-        """
-        Check if the requested model is available.
-        Provide pull instructions if the model is not available.
-        """
-        try:
-            response = requests.get(f"{self.base_url}/tags")
-            models_data = response.json()
-
-            # Check if the model exists in the list of available models
-            model_exists = any(
-                model["name"] == self.model_name
-                for model in models_data.get("models", [])
-            )
-
-            if model_exists:
-                if not self.quiet_mode:
-                    console.print(
-                        f"[bold green]Model '{self.model_name}' is available locally.[/bold green]"
-                    )
-            else:
-                console.print(
-                    "[bold red]Model not found. Please pull the model first.[/bold red]"
-                )
-                provide_model_pull_guide(self.model_name)
-                raise RuntimeError(
-                    f"Model '{self.model_name}' is not available. Please pull the model first."
-                )
-
-        except requests.RequestException as e:
-            console.print(
-                "[bold red]Could not check model availability. Please check your connection.[/bold red]"
-            )
-            raise RuntimeError(
-                f"Could not check if model '{self.model_name}' exists. Please check your connection."
             )
 
     def _try_start_ollama_service(self):

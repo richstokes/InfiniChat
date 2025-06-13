@@ -4,6 +4,8 @@ Utility functions for Ollama installation and model management.
 
 import platform
 import re
+import requests
+from console_utils import console
 
 
 def provide_ollama_installation_guide():
@@ -74,3 +76,49 @@ def strip_think_tag(text: str) -> str:
     cleaned_content = re.sub(r"\n{3,}", "\n\n", cleaned_content)
 
     return cleaned_content.strip()
+
+
+def check_model_availability(
+    model_name: str,
+    base_url: str = "http://localhost:11434/api",
+    quiet_mode: bool = False,
+):
+    """
+    Check if the requested model is available.
+    Provide pull instructions if the model is not available.
+
+    :param model_name: The name of the model to check
+    :param base_url: The base URL for the Ollama API
+    :param quiet_mode: Whether to suppress success messages
+    :raises RuntimeError: If the model is not available or there's a connection error
+    """
+    try:
+        response = requests.get(f"{base_url}/tags")
+        models_data = response.json()
+
+        # Check if the model exists in the list of available models
+        model_exists = any(
+            model["name"] == model_name for model in models_data.get("models", [])
+        )
+
+        if model_exists:
+            if not quiet_mode:
+                console.print(
+                    f"[bold green]Model '{model_name}' is available locally.[/bold green]"
+                )
+        else:
+            console.print(
+                "[bold red]Model not found. Please pull the model first.[/bold red]"
+            )
+            provide_model_pull_guide(model_name)
+            raise RuntimeError(
+                f"Model '{model_name}' is not available. Please pull the model first."
+            )
+
+    except requests.RequestException as e:
+        console.print(
+            "[bold red]Could not check model availability. Please check your connection.[/bold red]"
+        )
+        raise RuntimeError(
+            f"Could not check if model '{model_name}' exists. Please check your connection."
+        )
