@@ -4,7 +4,11 @@ import platform
 import subprocess
 import sys
 from console_utils import console
-from ollama_utils import provide_ollama_installation_guide, provide_model_pull_guide
+from ollama_utils import (
+    provide_ollama_installation_guide,
+    provide_model_pull_guide,
+    strip_think_tag,
+)
 
 
 class OllamaClient:
@@ -163,33 +167,6 @@ class OllamaClient:
             )
             return False
 
-    def _strip_think_tag(self, text: str) -> str:
-        """
-        Strip the <think> thinking text here </think> tags from the generated text.
-        :param text: The generated text containing think tags.
-        :return: The text with think tags and everything between them removed.
-
-        Needed for DeepSeek models which return text with <think> tags.
-        """
-        import re
-
-        # First attempt to remove complete think tags with content between them
-        # Use non-greedy matching to handle multiple think tags in the same text
-        cleaned_content = re.sub(r"<think>[\s\S]*?</think>", "", text, flags=re.DOTALL)
-
-        # Then handle any orphaned opening tags (in case the closing tag is missing)
-        cleaned_content = re.sub(
-            r"<think>[\s\S]*?($|(?=<think>))", "", cleaned_content, flags=re.DOTALL
-        )
-
-        # Remove any standalone closing tags that might remain
-        cleaned_content = re.sub(r"</think>", "", cleaned_content)
-
-        # Clean up any extra whitespace or newlines that might have been left behind
-        cleaned_content = re.sub(r"\n{3,}", "\n\n", cleaned_content)
-
-        return cleaned_content.strip()
-
     def add_message_to_history(self, role: str, content: str):
         """
         Add a message to the message history for chat models.
@@ -274,7 +251,7 @@ class OllamaClient:
             result += chunk
 
         # Strip think tags if they exist
-        result = self._strip_think_tag(result)
+        result = strip_think_tag(result)
 
         return result
 
