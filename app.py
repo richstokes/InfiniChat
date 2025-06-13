@@ -361,6 +361,11 @@ if __name__ == "__main__":
         help="Show raw JSON responses from the models",
     )
     parser.add_argument(
+        "--log_json",
+        action="store_true",
+        help="Log JSON state to a file",
+    )
+    parser.add_argument(
         "--history_limit",
         type=int,
         default=30,
