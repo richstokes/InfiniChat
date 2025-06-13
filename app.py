@@ -49,12 +49,6 @@ def simulate_conversation(
     """
     conversation_history = []
 
-    # Re-add system prompts
-    if client_a.system_prompt:
-        client_a.add_message_to_history("system", client_a.system_prompt)
-    if client_b.system_prompt:
-        client_b.add_message_to_history("system", client_b.system_prompt)
-
     if debug_mode:
         console.print(
             f"[bold yellow]Debug mode enabled![/bold yellow] Max turns: {max_turns}, Max tokens: {max_tokens}, History limit: {client_a.history_limit}"
@@ -363,7 +357,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--log_history",
         action="store_true",
-        help="Log message_history state to a file",
+        help="Log message_history state to a file (for debugging)",
     )
     parser.add_argument(
         "--history_limit",
