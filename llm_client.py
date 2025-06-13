@@ -68,7 +68,7 @@ class OllamaClient:
             with open(HISTORY_LOG_FILE, "w") as f:
                 f.write(f"Message History Size: {len(self.message_history)}\n")
                 f.write(
-                    f"Message History in Bytes: {sys.getsizeof(self.message_history)}\n"
+                    f"Message History in Bytes: {self._calculate_message_history_size()}\n"
                 )
                 f.write(f"Model Name: {self.model_name}\n")
                 f.write(json.dumps(self.message_history, indent=2))
@@ -374,3 +374,23 @@ class OllamaClient:
             # Aggressive trimming: reduce to minimal viable history
             # This will result in: system_prompt + summary + last_exchange (3-4 messages total)
             self.trim_message_history(max_messages)
+
+    def _calculate_message_history_size(self):
+        """
+        Calculate the actual total memory usage of the message history,
+        including all nested dictionaries and strings.
+
+        :return: Total size in bytes
+        """
+        total_size = sys.getsizeof(self.message_history)
+
+        for message in self.message_history:
+            # Add size of the dictionary itself
+            total_size += sys.getsizeof(message)
+
+            # Add size of each key-value pair in the message dictionary
+            for key, value in message.items():
+                total_size += sys.getsizeof(key)
+                total_size += sys.getsizeof(value)
+
+        return total_size
