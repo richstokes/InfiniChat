@@ -54,8 +54,8 @@ InfiniChat supports the following command-line arguments:
 | `--model_a` | Name of the first AI model to use | llama3:latest |
 | `--model_b` | Name of the second AI model to use | gemma3:12b |
 | `--debate_topic "Pizza is a vegetable"` | Topic to debate, model A will be "for" the topic, model B will be "against" | None |
-| `--model_a_prompt "Your custom prompt"` | Custom system prompt for model A (overrides default and debate prompts) | None |
-| `--model_b_prompt "Your custom prompt"` | Custom system prompt for model B (overrides default and debate prompts) | None |
+| `--model_a_prompt "Your custom prompt"` | Custom system prompt for model A (overrides default from `prompts.py`) | None |
+| `--model_b_prompt "Your custom prompt"` | Custom system prompt for model B (overrides default from prompts.py`) | None |
 
 ### Examples
 
