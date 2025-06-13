@@ -5,6 +5,8 @@ Utility functions for Ollama installation and model management.
 import platform
 import re
 import requests
+import subprocess
+import time
 from console_utils import console
 
 
@@ -121,4 +123,92 @@ def check_model_availability(
         )
         raise RuntimeError(
             f"Could not check if model '{model_name}' exists. Please check your connection."
+        )
+
+
+def try_start_ollama_service(base_url: str = "http://localhost:11434/api"):
+    """
+    Attempt to start the Ollama service if it's installed but not running.
+
+    :param base_url: The base URL for the Ollama API
+    :return: True if successfully started, False otherwise
+    """
+    os_name = platform.system().lower()
+
+    try:
+        if os_name == "darwin" or os_name == "linux":  # macOS or Linux
+            console.print(
+                "[bold yellow]Attempting to start Ollama service...[/bold yellow]"
+            )
+
+            # Check if ollama command is available
+            try:
+                subprocess.run(
+                    ["which", "ollama"],
+                    check=True,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+
+                # Try to start the service in the background
+                subprocess.Popen(
+                    ["ollama", "serve"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+
+                # Wait a moment for the service to start
+                time.sleep(3)
+
+                # Check if the service is now running
+                try:
+                    response = requests.get(f"{base_url}/models", timeout=2)
+                    if response.status_code == 200:
+                        console.print(
+                            "[bold green]✅ Successfully started Ollama service![/bold green]"
+                        )
+                        return True
+                except requests.RequestException:
+                    pass
+
+            except subprocess.CalledProcessError:
+                # ollama command not found
+                return False
+
+        # For Windows or if the above failed
+        return False
+
+    except Exception as e:
+        console.print(
+            "[bold red]Failed to start Ollama service. Please start it manually.[/bold red]"
+        )
+        return False
+
+
+def check_ollama_availability(
+    base_url: str = "http://localhost:11434/api", quiet_mode: bool = False
+):
+    """
+    Check if Ollama is installed and running.
+    Provide installation instructions if not available.
+
+    :param base_url: The base URL for the Ollama API
+    :param quiet_mode: Whether to suppress success messages
+    :raises RuntimeError: If Ollama server is not available
+    """
+    try:
+        response = requests.get(f"{base_url}/tags", timeout=5)
+        response.raise_for_status()
+        if not quiet_mode:
+            console.print(
+                "[bold green]Ollama server is running and accessible.[/bold green]"
+            )
+    except requests.RequestException as e:
+        console.print(
+            "[bold red]Ollama server is not available. Please install Ollama first.[/bold red]"
+        )
+        provide_ollama_installation_guide()
+        try_start_ollama_service(base_url)  # Attempt to start the service
+        raise RuntimeError(
+            "Ollama server is not available. Please follow the installation instructions above."
         )

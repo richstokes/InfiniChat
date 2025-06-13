@@ -9,6 +9,8 @@ from ollama_utils import (
     provide_model_pull_guide,
     strip_think_tag,
     check_model_availability,
+    check_ollama_availability,
+    try_start_ollama_service,
 )
 
 HISTORY_LOG_FILE = "message_history.log"
@@ -44,7 +46,7 @@ class OllamaClient:
             )
 
         # Check if Ollama is installed and running
-        self._check_ollama_availability()
+        check_ollama_availability(self.base_url, self.quiet_mode)
 
         # Check if the requested model is available
         check_model_availability(self.model_name, self.base_url, self.quiet_mode)
@@ -53,87 +55,6 @@ class OllamaClient:
             console.print(
                 f"[bold green]OllamaClient initialized with model: {self.model_name}[/bold green]"
             )
-
-    def _check_ollama_availability(self):
-        """
-        Check if Ollama is installed and running.
-        Provide installation instructions if not available.
-        """
-        try:
-            response = requests.get(f"{self.base_url}/tags", timeout=5)
-            response.raise_for_status()
-            if not self.quiet_mode:
-                console.print(
-                    "[bold green]Ollama server is running and accessible.[/bold green]"
-                )
-        except requests.RequestException as e:
-            console.print(
-                "[bold red]Ollama server is not available. Please install Ollama first.[/bold red]"
-            )
-            provide_ollama_installation_guide()
-            self._try_start_ollama_service()  # Attempt to start the service
-            raise RuntimeError(
-                "Ollama server is not available. Please follow the installation instructions above."
-            )
-
-    def _try_start_ollama_service(self):
-        """
-        Attempt to start the Ollama service if it's installed but not running.
-
-        :return: True if successfully started, False otherwise
-        """
-        os_name = platform.system().lower()
-
-        try:
-            if os_name == "darwin" or os_name == "linux":  # macOS or Linux
-                console.print(
-                    "[bold yellow]Attempting to start Ollama service...[/bold yellow]"
-                )
-
-                # Check if ollama command is available
-                try:
-                    subprocess.run(
-                        ["which", "ollama"],
-                        check=True,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    )
-
-                    # Try to start the service in the background
-                    subprocess.Popen(
-                        ["ollama", "serve"],
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE,
-                    )
-
-                    # Wait a moment for the service to start
-                    import time
-
-                    time.sleep(3)
-
-                    # Check if the service is now running
-                    try:
-                        response = requests.get(f"{self.base_url}/models", timeout=2)
-                        if response.status_code == 200:
-                            console.print(
-                                "[bold green]✅ Successfully started Ollama service![/bold green]"
-                            )
-                            return True
-                    except requests.RequestException:
-                        pass
-
-                except subprocess.CalledProcessError:
-                    # ollama command not found
-                    return False
-
-            # For Windows or if the above failed
-            return False
-
-        except Exception as e:
-            console.print(
-                "[bold red]Failed to start Ollama service. Please start it manually.[/bold red]"
-            )
-            return False
 
     def add_message_to_history(self, role: str, content: str):
         """
