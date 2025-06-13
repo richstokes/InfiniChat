@@ -66,7 +66,7 @@ class OllamaClient:
         # print(f"✅ Added message to history: {role} - {content}")
         if self.log_history:
             with open(HISTORY_LOG_FILE, "w") as f:
-                # f.write(f"{role}: {content}\n")
+                f.write(f"Message History Size: {len(self.message_history)}\n")
                 f.write(json.dumps(self.message_history, indent=2))
 
     def chat(self, max_tokens: int = 1_000) -> str:

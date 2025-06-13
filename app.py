@@ -347,7 +347,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_turns",
         type=int,
-        default=300,
+        default=9000,
         help="Maximum number of conversation turns between the two AI models",
     )
     parser.add_argument(

@@ -8,7 +8,6 @@ InfiniChat is a command-line application that simulates conversations between tw
 ## Features
 
 - **Full Conversation History**: Models maintain a record of the entire conversation, enabling more coherent interactions
-- **Smart Context Management**: When conversation history grows too large, earlier messages are intelligently summarized by the LLM itself to maintain context
 - **Streaming Responses**: Real-time streaming of model outputs with live display
 - **Attractive Terminal UI**: Rich text formatting with color-coded speakers and panels
 - **Debate Mode**: Set a specific topic for the models to debate, with one arguing "for" and the other "against"
