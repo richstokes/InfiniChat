@@ -48,7 +48,7 @@ InfiniChat supports the following command-line arguments:
 | `--debug` | Enable debug mode for additional output | False |
 | `--show_json` | Show RAW JSON from chat api | False | 
 | `--stats` | Show message history statistics in panel titles | False |
-| `--history_limit` | Maximum number of messages to keep in conversation history for each model before truncating | 100 |
+| `--history_limit` | Number of messages to keep in conversation history for each model before summarizing and trimming. Turn this down if messages gradually start to take longer to generate | 100 |
 | `--delay` | Delay in seconds between streaming chunks (for slower, more readable streaming) | 0.0 |
 | `--model_a` | Name of the first AI model to use | llama3:latest |
 | `--model_b` | Name of the second AI model to use | gemma3:12b |

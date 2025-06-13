@@ -375,7 +375,7 @@ if __name__ == "__main__":
         "--history_limit",
         type=int,
         default=100,
-        help="Maximum number of messages to keep in conversation history for each model before summarizing and trimming",
+        help="Number of messages to keep in conversation history for each model before summarizing and trimming. Turn this down if messages gradually start to take longer to generate.",
     )
     parser.add_argument(
         "--delay",
