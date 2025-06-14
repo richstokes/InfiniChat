@@ -11,7 +11,7 @@ Thanks for your interest in contributing! All kinds of contributions are welcome
 - **Push** to your fork (`git push origin feature-name`)
 - **Open a pull request**
 
-We'll review it as soon as we can.
+I'll review it as soon as I can.
 
 ## Guidelines
 
@@ -26,4 +26,4 @@ Be respectful. Be constructive. Harassment, hate speech, or discrimination of an
 
 ---
 
-We appreciate your help and look forward to your PR!
+I appreciate your help and look forward to your PR!
