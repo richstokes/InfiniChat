@@ -1,4 +1,4 @@
-from llm_client import OllamaClient
+from llm_client import OllamaClient, OpenAIClient
 from console_utils import console
 from prompts import *
 from rich.panel import Panel
@@ -11,10 +11,15 @@ import argparse
 import sys
 import time
 
+# Default Ollama models
 # MODEL_A_NAME = "deepseek-r1:latest"
 # MODEL_A_NAME = "qwen:latest"
 MODEL_A_NAME = "llama3:latest"
 MODEL_B_NAME = "gemma3:12b"
+
+# Default OpenAI models
+OPENAI_MODEL_A_NAME = "gpt-4o"
+OPENAI_MODEL_B_NAME = "gpt-4.1"
 
 # Style for client A - blue theme
 CLIENT_A_STYLE = "bold blue"
@@ -386,14 +391,28 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_a",
         type=str,
-        default="llama3:latest",
-        help="Name of the first AI model to use",
+        default="",
+        help="Name of the first AI model to use (auto-detected based on client type if not specified)",
     )
     parser.add_argument(
         "--model_b",
         type=str,
-        default="gemma3:12b",
-        help="Name of the second AI model to use",
+        default="",
+        help="Name of the second AI model to use (auto-detected based on client type if not specified)",
+    )
+    parser.add_argument(
+        "--client_a",
+        type=str,
+        choices=["ollama", "openai"],
+        default="ollama",
+        help="Type of client to use for model A (ollama or openai)",
+    )
+    parser.add_argument(
+        "--client_b",
+        type=str,
+        choices=["ollama", "openai"],
+        default="ollama",
+        help="Type of client to use for model B (ollama or openai)",
     )
     parser.add_argument(
         "--stats",
@@ -420,6 +439,13 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
+    # Auto-detect model names based on client type if not specified
+    if not args.model_a:
+        args.model_a = OPENAI_MODEL_A_NAME if args.client_a == "openai" else MODEL_A_NAME
+    
+    if not args.model_b:
+        args.model_b = OPENAI_MODEL_B_NAME if args.client_b == "openai" else MODEL_B_NAME
+
     if args.debate_topic:
         console.print(
             f"[bold yellow]Debate mode enabled! Topic: {args.debate_topic}[/bold yellow]"
@@ -442,22 +468,24 @@ if __name__ == "__main__":
         console.print("[bold green]Using custom prompt for Model B[/bold green]")
 
     # Initialize clients with parsed arguments
-    client_A = OllamaClient(
-        model_name=args.model_a,
-        debug_mode=args.debug,
-        show_json=args.show_json,
-        system_prompt=MODEL_A_PROMPT,
-        history_limit=args.history_limit,
-        log_history=args.log_history,
-    )
-    client_B = OllamaClient(
-        model_name=args.model_b,
-        debug_mode=args.debug,
-        show_json=args.show_json,
-        system_prompt=MODEL_B_PROMPT,
-        history_limit=args.history_limit,
-        log_history=args.log_history,
-    )
+    def create_client(client_type, model_name, system_prompt):
+        """Create a client based on the specified type."""
+        client_args = {
+            "model_name": model_name,
+            "debug_mode": args.debug,
+            "show_json": args.show_json,
+            "system_prompt": system_prompt,
+            "history_limit": args.history_limit,
+            "log_history": args.log_history,
+        }
+        
+        if client_type == "openai":
+            return OpenAIClient(**client_args)
+        else:  # default to ollama
+            return OllamaClient(**client_args)
+    
+    client_A = create_client(args.client_a, args.model_a, MODEL_A_PROMPT)
+    client_B = create_client(args.client_b, args.model_b, MODEL_B_PROMPT)
 
     # Print welcome message
     console.print("")
