@@ -1,5 +1,6 @@
 # InfiniChat
-InfiniChat is a command-line application that simulates conversations between two LLMs running locally using Ollama. Just for fun really - I find it interesting to watch the chats! You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what topics they spiral in to. 
+
+InfiniChat is a command-line application that simulates conversations between two LLMs. It now supports both local Ollama models and OpenAI API models, giving you the flexibility to choose your preferred AI provider. Just for fun really - I find it interesting to watch the chats! You can have them flesh out ideas, debate things, argue, or just give vague prompts and see what topics they spiral in to. 
 
 <p align="center">
     <img src="https://github.com/richstokes/InfiniChat/blob/main/screenshot.png?raw=true" width="95%" alt="InfiniChat Screenshot">
@@ -7,24 +8,35 @@ InfiniChat is a command-line application that simulates conversations between tw
 
 ## Features
 
+- **Multi-Provider Support**: Works with both local Ollama and OpenAI API models
 - **Full Conversation History**: Models maintain a record of the entire conversation, enabling more coherent interactions
 - **Streaming Responses**: Real-time streaming of model outputs with live display
 - **Attractive Terminal UI**: Rich text formatting with color-coded speakers and panels
 - **Debate Mode**: Set a specific topic for the models to debate, with one arguing "for" and the other "against"
 - **Conversation Saving**: Automatically saves transcripts of conversations
+- **Environment Configuration**: Easy setup with .env file support
 
 ## Requirements
 
 - Python 3.+
-- [Ollama](https://ollama.com/download) installed and running
-- Required models (`llama3:latest` and `gemma3:12b` by default) pulled in Ollama
-- A "non-trivial" amount of RAM. This uses 30GB+ on my Macbook.
+- **For Ollama models**: 
+  - [Ollama](https://ollama.com/) installed and running locally
+  - Local models pulled (e.g., `ollama pull llama3:latest`)
+- **For OpenAI models**: 
+  - OpenAI API key (set as environment variable `OPENAI_API_KEY`)
+  - Internet connection for API calls
+- **Mixed usage**: Both requirements above for respective models
 
 ## Installation
 
 ```bash
 # Install dependencies
 pipenv install
+
+# For OpenAI models only:
+# Copy the example environment file and configure your API key
+cp .env.example .env
+# Edit .env file and add your OpenAI API key
 ```
 
 ## Usage
@@ -50,15 +62,29 @@ InfiniChat supports the following command-line arguments:
 | `--stats` | Show message history statistics in panel titles | False |
 | `--history_limit` | Number of messages to keep in conversation history for each model before summarizing and trimming. Turn this down if messages gradually start to take longer to generate | 100 |
 | `--delay` | Delay in seconds between streaming chunks (for slower, more readable streaming) | 0.0 |
-| `--model_a` | Name of the first AI model to use | llama3:latest |
-| `--model_b` | Name of the second AI model to use | gemma3:12b |
+| `--model_a` | Name of the first AI model to use (auto-detected based on client type if not specified) | gpt-4o (OpenAI) / llama3:latest (Ollama) |
+| `--model_b` | Name of the second AI model to use (auto-detected based on client type if not specified) | gpt-4.1 (OpenAI) / gemma3:12b (Ollama) |
+| `--client_a` | Type of client to use for model A (`ollama` or `openai`) | ollama |
+| `--client_b` | Type of client to use for model B (`ollama` or `openai`) | ollama |
 | `--debate_topic "Pizza is a vegetable"` | Topic to debate, model A will be "for" the topic, model B will be "against" | None |
 | `--model_a_prompt "Your custom prompt"` | Custom system prompt for model A (overrides default from `prompts.py`) | None |
 | `--model_b_prompt "Your custom prompt"` | Custom system prompt for model B (overrides default from `prompts.py`) | None |
 
 ### Examples
 
-Run with custom settings:
+#### Basic Usage
+```bash
+# Default: Two Ollama models (requires Ollama installation)
+pipenv run python app.py
+
+# Two OpenAI models
+pipenv run python app.py --client_a openai --client_b openai
+
+# Mixed: Ollama model A and OpenAI model B
+pipenv run python app.py --client_a ollama --client_b openai
+```
+
+#### Advanced Usage
 ```bash
 # Run with 2000 conversation turns!
 pipenv run python app.py --max_turns 2000
@@ -75,8 +101,14 @@ pipenv run python app.py --delay 0.1
 # Use different models
 pipenv run python app.py --model_a qwen:latest --model_b deepseek-r1:latest
 
+# Use different OpenAI models
+pipenv run python app.py --client_a openai --client_b openai --model_a gpt-4o --model_b gpt-4.1
+
 # Start a debate
 pipenv run python app.py --debate_topic "Coffee is better than tea"
+
+# Debate mode with mixed models
+pipenv run python app.py --client_a ollama --client_b openai --debate_topic "Will artificial intelligence replace humans?"
 
 # Use custom prompts for both models
 pipenv run python app.py --model_a_prompt "You are a cheerful assistant who loves to help people" --model_b_prompt "You are a serious academic who prefers formal language"
