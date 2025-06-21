@@ -509,7 +509,7 @@ if __name__ == "__main__":
 
         # Save the conversation history to a file
         output_file = "conversation_history.txt"
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(conversation_history)
 
         # Confirm save with nice formatting

@@ -459,6 +459,30 @@ class OpenAIClient:
                 f"[bold green]OpenAIClient initialized with model: {self.model_name}[/bold green]"
             )
 
+    def _get_api_params(self, max_tokens: int, temperature: float = 0.7):
+        """
+        Get API parameters based on model capabilities.
+        Reasoning models (like o4-mini) have restrictions on certain parameters.
+        """
+        params = {
+            "model": self.model_name,
+            "messages": self.message_history,
+        }
+        
+        # Handle max_tokens vs max_completion_tokens
+        # Reasoning models require max_completion_tokens instead of max_tokens
+        if "o4" in self.model_name.lower() or "o3" in self.model_name.lower():
+            params["max_completion_tokens"] = max_tokens
+        else:
+            params["max_tokens"] = max_tokens
+        
+        # Handle temperature restrictions
+        # Reasoning models only support default temperature
+        if not ("o4" in self.model_name.lower() or "o1" in self.model_name.lower()):
+            params["temperature"] = temperature
+            
+        return params
+
     def add_message_to_history(self, role: str, content: str):
         """
         Add a message to the message history for chat models.
@@ -476,10 +500,11 @@ class OpenAIClient:
                 f.write(f"Model Name: {self.model_name}\n")
                 f.write(json.dumps(self.message_history, indent=2))
 
-    def chat(self, max_tokens: int = 1_000) -> str:
+    def chat(self, max_tokens: int = 1_000, temperature: float = 0.7) -> str:
         """
         Generate a chat response using the specified OpenAI model and the current message history.
         :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: The temperature for response generation (ignored for models that don't support it).
         :return: The generated chat response.
         """
         if not self.message_history:
@@ -490,12 +515,9 @@ class OpenAIClient:
         # Auto-trim if the history is getting too long
         self._auto_trim_if_needed()
 
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=self.message_history,
-            max_tokens=max_tokens,
-            temperature=0.7,
-        )
+        # Get appropriate API parameters for this model
+        api_params = self._get_api_params(max_tokens, temperature)
+        response = self.client.chat.completions.create(**api_params)
         
         if self.show_json:
             print(f"\n****\nOpenAI API Response: {json.dumps(response.model_dump(), indent=2)} \n****")
@@ -510,11 +532,12 @@ class OpenAIClient:
 
         return response_text
 
-    def chat_stream(self, max_tokens: int = 100):
+    def chat_stream(self, max_tokens: int = 100, temperature: float = 0.7):
         """
         Generate a streaming chat response using the specified OpenAI model and the current message history.
 
         :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: The temperature for response generation (ignored for models that don't support it).
         :return: A generator yielding chunks of the generated chat response.
         """
         if not self.message_history:
@@ -525,13 +548,10 @@ class OpenAIClient:
         # Auto-trim if the history is getting too long
         self._auto_trim_if_needed()
 
-        stream = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=self.message_history,
-            max_tokens=max_tokens,
-            temperature=0.7,
-            stream=True,
-        )
+        # Get appropriate API parameters for this model
+        api_params = self._get_api_params(max_tokens, temperature)
+        api_params["stream"] = True
+        stream = self.client.chat.completions.create(**api_params)
         
         full_response = ""
         for chunk in stream:
@@ -543,17 +563,18 @@ class OpenAIClient:
         # Add the complete response to history
         self.add_message_to_history("assistant", full_response)
 
-    def chat_stream_with_callback(self, max_tokens: int = 100, callback=None):
+    def chat_stream_with_callback(self, max_tokens: int = 100, temperature: float = 0.7, callback=None):
         """
         Generate a streaming chat response and apply a callback function to each chunk.
         Also returns the complete response as a single string.
 
         :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: The temperature for response generation (ignored for models that don't support it).
         :param callback: A function to call with each chunk (e.g., to display it).
         :return: The complete generated chat response as a string.
         """
         result = ""
-        for chunk in self.chat_stream(max_tokens):
+        for chunk in self.chat_stream(max_tokens, temperature):
             # Apply the callback to each chunk if provided
             if callback:
                 callback(chunk)
