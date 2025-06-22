@@ -3,6 +3,7 @@ import json
 import platform
 import subprocess
 import sys
+import os
 from console_utils import console
 from rich.panel import Panel
 from ollama_utils import (
@@ -13,6 +14,15 @@ from ollama_utils import (
     check_ollama_availability,
     try_start_ollama_service,
 )
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
 
 HISTORY_LOG_FILE = "message_history.log"
 
@@ -403,3 +413,239 @@ class OllamaClient:
                 total_size += sys.getsizeof(value)
 
         return total_size
+
+
+class OpenAIClient:
+    def __init__(
+        self,
+        model_name: str,
+        system_prompt: str = None,
+        debug_mode: bool = False,
+        show_json: bool = False,
+        quiet_mode: bool = False,
+        history_limit: int = 30,
+        log_history: bool = False,
+    ):
+        self.quiet_mode = quiet_mode
+        self.debug_mode = debug_mode
+        self.show_json = show_json
+        self.model_name = model_name
+        self.system_prompt = system_prompt
+        self.history_limit = history_limit
+        self.log_history = log_history
+        self.message_history = []  # Initialize an empty message history, used for chat models
+        self.trim_count = 0  # Counter for how many times we've trimmed the history
+
+        # Check if OpenAI library is installed
+        if OpenAI is None:
+            raise ImportError("OpenAI library not installed. Run: pip install openai")
+        
+        # Get API key from environment
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            raise ValueError("OPENAI_API_KEY environment variable not set")
+
+        # Initialize the OpenAI client
+        self.client = OpenAI(api_key=api_key)
+        
+        # Add system prompt to message history if provided
+        if self.system_prompt:
+            self.message_history.append(
+                {"role": "system", "content": self.system_prompt}
+            )
+
+        if not self.quiet_mode:
+            console.print(
+                f"[bold green]OpenAIClient initialized with model: {self.model_name}[/bold green]"
+            )
+
+    def _get_api_params(self, max_tokens: int, temperature: float = 0.7):
+        """
+        Get API parameters based on model capabilities.
+        Reasoning models (like o4-mini) have restrictions on certain parameters.
+        """
+        params = {
+            "model": self.model_name,
+            "messages": self.message_history,
+        }
+        
+        # Handle max_tokens vs max_completion_tokens
+        # Reasoning models require max_completion_tokens instead of max_tokens
+        if "o4" in self.model_name.lower() or "o3" in self.model_name.lower():
+            params["max_completion_tokens"] = max_tokens
+        else:
+            params["max_tokens"] = max_tokens
+        
+        # Handle temperature restrictions
+        # Reasoning models only support default temperature
+        if not ("o4" in self.model_name.lower() or "o3" in self.model_name.lower()):
+            params["temperature"] = temperature
+            
+        return params
+
+    def add_message_to_history(self, role: str, content: str):
+        """
+        Add a message to the message history for chat models.
+        :param role: The role of the message sender ('user' or 'assistant').
+        :param content: The content of the message.
+        """
+        self.message_history.append({"role": role, "content": content})
+
+        if self.log_history:
+            with open(HISTORY_LOG_FILE, "w") as f:
+                f.write(f"Message History Size: {len(self.message_history)}\n")
+                f.write(
+                    f"Message History in Bytes: {self._calculate_message_history_size()}\n"
+                )
+                f.write(f"Model Name: {self.model_name}\n")
+                f.write(json.dumps(self.message_history, indent=2))
+
+    def chat(self, max_tokens: int = 1_000, temperature: float = 0.7) -> str:
+        """
+        Generate a chat response using the specified OpenAI model and the current message history.
+        :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: The temperature for response generation (ignored for models that don't support it).
+        :return: The generated chat response.
+        """
+        if not self.message_history:
+            raise ValueError(
+                "Message history is empty. Add messages before calling chat()."
+            )
+
+        # Auto-trim if the history is getting too long
+        self._auto_trim_if_needed()
+
+        # Get appropriate API parameters for this model
+        api_params = self._get_api_params(max_tokens, temperature)
+        response = self.client.chat.completions.create(**api_params)
+        
+        if self.show_json:
+            print(f"\n****\nOpenAI API Response: {json.dumps(response.model_dump(), indent=2)} \n****")
+        
+        response_text = response.choices[0].message.content
+        
+        # Add the response to history
+        self.add_message_to_history("assistant", response_text)
+        
+        if self.debug_mode:
+            print(f"Chat response: {response_text}")
+
+        return response_text
+
+    def chat_stream(self, max_tokens: int = 100, temperature: float = 0.7):
+        """
+        Generate a streaming chat response using the specified OpenAI model and the current message history.
+
+        :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: The temperature for response generation (ignored for models that don't support it).
+        :return: A generator yielding chunks of the generated chat response.
+        """
+        if not self.message_history:
+            raise ValueError(
+                "Message history is empty. Add messages before calling chat_stream()."
+            )
+
+        # Auto-trim if the history is getting too long
+        self._auto_trim_if_needed()
+
+        # Get appropriate API parameters for this model
+        api_params = self._get_api_params(max_tokens, temperature)
+        api_params["stream"] = True
+        stream = self.client.chat.completions.create(**api_params)
+        
+        full_response = ""
+        for chunk in stream:
+            if chunk.choices[0].delta.content is not None:
+                content = chunk.choices[0].delta.content
+                full_response += content
+                yield content
+        
+        # Add the complete response to history
+        self.add_message_to_history("assistant", full_response)
+
+    def chat_stream_with_callback(self, max_tokens: int = 100, temperature: float = 0.7, callback=None):
+        """
+        Generate a streaming chat response and apply a callback function to each chunk.
+        Also returns the complete response as a single string.
+
+        :param max_tokens: The maximum number of tokens to generate.
+        :param temperature: The temperature for response generation (ignored for models that don't support it).
+        :param callback: A function to call with each chunk (e.g., to display it).
+        :return: The complete generated chat response as a string.
+        """
+        result = ""
+        for chunk in self.chat_stream(max_tokens, temperature):
+            # Apply the callback to each chunk if provided
+            if callback:
+                callback(chunk)
+
+            # Accumulate the result
+            result += chunk
+
+        return result
+
+    def trim_message_history(self, max_messages, keep_system_prompt=True):
+        """
+        Trim the message history to prevent it from growing too large.
+        
+        :param max_messages: Maximum number of messages before triggering trim
+        :param keep_system_prompt: Whether to always keep the system prompt
+        """
+        if self.debug_mode:
+            print(f"Trimming message history to a maximum of {max_messages} messages.")
+            print(f"Current message history length: {len(self.message_history)}")
+
+        # Check if trimming is needed
+        if len(self.message_history) <= max_messages:
+            if self.debug_mode:
+                print("No trimming needed - history is within limit.")
+            return
+        
+        # Keep system prompt if requested
+        system_messages = []
+        other_messages = []
+        
+        for msg in self.message_history:
+            if msg["role"] == "system" and keep_system_prompt:
+                system_messages.append(msg)
+            else:
+                other_messages.append(msg)
+        
+        # Calculate how many non-system messages to keep
+        available_slots = max_messages - len(system_messages)
+        if available_slots > 0:
+            # Keep the most recent messages
+            other_messages = other_messages[-available_slots:]
+        else:
+            other_messages = []
+        
+        # Rebuild message history
+        self.message_history = system_messages + other_messages
+        
+        if self.debug_mode:
+            print(f"Trimmed message history to {len(self.message_history)} messages")
+
+    def _calculate_message_history_size(self):
+        """Calculate the approximate size of the message history in bytes."""
+        total_size = 0
+        for message in self.message_history:
+            total_size += sys.getsizeof(message)
+            # Add size of each key-value pair in the message dictionary
+            for key, value in message.items():
+                total_size += sys.getsizeof(key)
+                total_size += sys.getsizeof(value)
+        
+        return total_size
+        
+    def _auto_trim_if_needed(self):
+        """
+        Automatically trim the message history if it exceeds the history limit.
+        This helps prevent token limits from being exceeded.
+        """
+        self.trim_count += 1
+        
+        # Only check every few messages to avoid constant trimming
+        if self.trim_count % 5 == 0 and len(self.message_history) > self.history_limit:
+            if self.debug_mode:
+                print(f"Auto-trimming message history (current size: {len(self.message_history)})")
+            self.trim_message_history(self.history_limit)
