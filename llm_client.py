@@ -478,7 +478,7 @@ class OpenAIClient:
         
         # Handle temperature restrictions
         # Reasoning models only support default temperature
-        if not ("o4" in self.model_name.lower() or "o1" in self.model_name.lower()):
+        if not ("o4" in self.model_name.lower() or "o3" in self.model_name.lower()):
             params["temperature"] = temperature
             
         return params
